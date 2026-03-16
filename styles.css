@@ -171,10 +171,13 @@ body {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
+  min-height: 44px;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--separator);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s, border-color 0.2s;
 }
 .option:hover { background: var(--fill); border-color: rgba(0,0,0,0.12); }
@@ -200,18 +203,24 @@ body {
 .nav__center { text-align: center; }
 .mono { font-size: 13px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
-/* Buttons */
+/* Buttons - 移动端可点区域与点击延迟 */
 .btn {
   border: 1px solid var(--separator);
   background: var(--surface);
   color: var(--text);
   padding: 12px 20px;
+  min-height: 44px;
   border-radius: var(--radius);
   font-family: var(--font);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s, border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .btn:hover { background: var(--fill); border-color: rgba(0,0,0,0.12); }
 .btn:disabled {
@@ -226,7 +235,7 @@ body {
 }
 .btn--primary:hover { opacity: 0.88; }
 .btn--ghost { background: transparent; }
-.btn--sm { padding: 8px 14px; font-size: 13px; }
+.btn--sm { padding: 8px 14px; font-size: 13px; min-height: 40px; }
 
 .submitRow {
   margin-top: 20px;
@@ -235,6 +244,9 @@ body {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+@media (max-width: 480px) {
+  .submitRow .btn { width: 100%; min-height: 48px; }
 }
 .hint { font-size: 13px; color: var(--text-tertiary); line-height: 1.4; }
 

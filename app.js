@@ -1026,7 +1026,7 @@
     if (currentIndex < questions.length - 1) setIndex(currentIndex + 1);
   });
 
-  el.btnSubmit.addEventListener("click", () => {
+  function doSubmit() {
     const state = activeState();
     if (!state) return;
     const total = questions.length;
@@ -1059,7 +1059,8 @@
       const resultCardTop = el.resultCard.getBoundingClientRect().top + window.scrollY - 12;
       window.scrollTo({ top: Math.max(0, resultCardTop), behavior: "smooth" });
     }
-  });
+  }
+  el.btnSubmit.addEventListener("click", doSubmit);
 
   el.btnReset.addEventListener("click", () => {
     const ok = confirm("确定要重置吗？这会清空 A/B 的所有作答与提交状态。");
