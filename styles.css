@@ -949,6 +949,23 @@ body {
   .animalModalCard__desc { font-size: 14px; }
 }
 
+/* 彩蛋层：全屏、不阻挡点击、最上层 */
+.egg-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  display: none;
+}
+.egg-wrap.egg-wrap--on {
+  display: block;
+}
+.egg-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* 输入框 16px 避免 iOS 自动缩放 */
 @media (max-width: 600px) {
   .input {

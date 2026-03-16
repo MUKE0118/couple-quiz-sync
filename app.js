@@ -49,8 +49,11 @@
     animalModalList: qs("#animalModalList"),
     animalModalClose: qs("#animalModalClose"),
     animalModalBackdrop: qs("#animalModalBackdrop"),
+    eggWrap: qs("#eggWrap"),
+    eggCanvas: qs("#eggCanvas"),
   };
   let currentReportUrl = null;
+  let eggAnimationId = null;
 
   const questions = Array.isArray(window.QUESTIONS) ? window.QUESTIONS : [];
   const dimensions = Array.isArray(window.DIMENSIONS) ? window.DIMENSIONS : [];
@@ -335,6 +338,174 @@
     return { matches, diffs };
   }
 
+  /** 彩蛋：一致率 100% 放烟花，0% 爆炸。*/
+  function runEggEffect(kind) {
+    const wrap = el.eggWrap;
+    const canvas = el.eggCanvas;
+    if (!wrap || !canvas) return;
+    if (eggAnimationId) cancelAnimationFrame(eggAnimationId);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let w = 0, h = 0;
+    function resize() {
+      w = canvas.offsetWidth || window.innerWidth;
+      h = canvas.offsetHeight || window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+    }
+    resize();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
+
+    const colors = ["#ff6b6b", "#ffd93d", "#6bcb77", "#4d96ff", "#c44dff", "#ff9f43"];
+    const now = () => Date.now();
+
+    if (kind === "fireworks") {
+      const rockets = [];
+      const particles = [];
+      let lastRocket = 0;
+      const start = now();
+      const DURATION = 4200;
+
+      function addRocket() {
+        rockets.push({
+          x: Math.random() * w * 0.6 + w * 0.2,
+          y: h + 20,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -12 - Math.random() * 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        });
+      }
+
+      function burst(x, y, color) {
+        const n = 28 + Math.floor(Math.random() * 12);
+        for (let i = 0; i < n; i++) {
+          const a = (Math.PI * 2 * i) / n + Math.random();
+          const v = 4 + Math.random() * 6;
+          particles.push({
+            x, y, color,
+            vx: Math.cos(a) * v,
+            vy: Math.sin(a) * v - 2,
+            life: 1,
+            decay: 0.018 + Math.random() * 0.01,
+          });
+        }
+      }
+
+      function tick() {
+        const t = now() - start;
+        if (t > DURATION) {
+          wrap.classList.remove("egg-wrap--on");
+          wrap.setAttribute("aria-hidden", "true");
+          return;
+        }
+        if (t - lastRocket > 380 && t < 3200) {
+          lastRocket = t;
+          addRocket();
+        }
+        ctx.fillStyle = "rgba(0,0,0,0.08)";
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = rockets.length - 1; i >= 0; i--) {
+          const r = rockets[i];
+          r.x += r.vx;
+          r.y += r.vy;
+          r.vy += 0.22;
+          ctx.fillStyle = r.color;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+          if (r.vy > 0) {
+            burst(r.x, r.y, r.color);
+            rockets.splice(i, 1);
+          }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.08;
+          p.life -= p.decay;
+          if (p.life <= 0) { particles.splice(i, 1); continue; }
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+
+        eggAnimationId = requestAnimationFrame(tick);
+      }
+      wrap.classList.add("egg-wrap--on");
+      wrap.setAttribute("aria-hidden", "false");
+      addRocket();
+      tick();
+    } else if (kind === "explosion") {
+      const particles = [];
+      const start = now();
+      const DURATION = 2600;
+      const cx = w / 2;
+      const cy = h / 2;
+      const n = 80 + Math.floor(Math.random() * 40);
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const v = 6 + Math.random() * 14;
+        particles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(a) * v,
+          vy: Math.sin(a) * v,
+          life: 1,
+          decay: 0.025 + Math.random() * 0.02,
+          color: i < n / 2 ? "#ff6b6b" : colors[Math.floor(Math.random() * colors.length)],
+          size: 1.5 + Math.random() * 2,
+        });
+      }
+      let flash = 1;
+
+      function tick() {
+        const t = now() - start;
+        if (t > DURATION) {
+          wrap.classList.remove("egg-wrap--on");
+          wrap.setAttribute("aria-hidden", "true");
+          return;
+        }
+        ctx.fillStyle = "rgba(0,0,0,0.12)";
+        ctx.fillRect(0, 0, w, h);
+        if (flash > 0) {
+          ctx.globalAlpha = flash;
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.globalAlpha = 1;
+          flash -= 0.15;
+        }
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.98;
+          p.vy *= 0.98;
+          p.life -= p.decay;
+          if (p.life <= 0) { particles.splice(i, 1); continue; }
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        eggAnimationId = requestAnimationFrame(tick);
+      }
+      wrap.classList.add("egg-wrap--on");
+      wrap.setAttribute("aria-hidden", "false");
+      tick();
+    }
+  }
+
   function computeDimensionStats(state) {
     const a = state.a || {};
     const b = state.b || {};
@@ -490,6 +661,11 @@
     el.matchCount.textContent = `${matches.length}`;
     el.totalCount.textContent = `${total}`;
     el.matchRate.textContent = `${rate}%`;
+
+    if (total > 0) {
+      if (rate === 100) runEggEffect("fireworks");
+      else if (rate === 0) runEggEffect("explosion");
+    }
 
     renderDimensionAnalysis(state);
     renderAdvice(state);
