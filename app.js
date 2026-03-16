@@ -45,7 +45,6 @@
     reportPreviewImg: qs("#reportPreviewImg"),
     btnDownloadReport: qs("#btnDownloadReport"),
     btnViewAllAnimals: qs("#btnViewAllAnimals"),
-    btnViewAllAnimalsFooter: qs("#btnViewAllAnimalsFooter"),
     animalModal: qs("#animalModal"),
     animalModalList: qs("#animalModalList"),
     animalModalClose: qs("#animalModalClose"),
@@ -1082,8 +1081,11 @@
   }
   if (el.btnJoinRoom) el.btnJoinRoom.addEventListener("click", connectAndJoin);
 
-  [el.btnViewAllAnimals, el.btnViewAllAnimalsFooter].forEach((btn) => {
-    if (btn) btn.addEventListener("click", openAnimalModal);
+  document.body.addEventListener("click", (e) => {
+    if (e.target.closest("#btnViewAllAnimals")) {
+      e.preventDefault();
+      openAnimalModal();
+    }
   });
   if (el.animalModalClose) el.animalModalClose.addEventListener("click", closeAnimalModal);
   if (el.animalModalBackdrop) el.animalModalBackdrop.addEventListener("click", closeAnimalModal);
