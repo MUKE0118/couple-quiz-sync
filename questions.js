@@ -9,6 +9,7 @@ window.DIMENSIONS = [
   { id: "future", name: "未来与承诺" },
   { id: "intimacy", name: "亲密与表达" },
   { id: "life", name: "生活节奏" },
+  { id: "sync", name: "默契问答" },
 ];
 
 window.QUESTIONS = [
@@ -246,6 +247,171 @@ window.QUESTIONS = [
       { id: "action", label: "行动胜过名分：做到了就算承诺" },
       { id: "freedom", label: "承诺要留白：不想被框住" },
       { id: "evolve", label: "随时间生长：不急着定义" },
+    ],
+  },
+  {
+    id: "q21",
+    dim: "intimacy",
+    title: "你更看重关系里的哪种“同步”？",
+    options: [
+      { id: "emotion", label: "情绪同步：能接住彼此的高潮低谷" },
+      { id: "time", label: "时间同步：节奏一致、常在一起" },
+      { id: "value", label: "价值观同步：大事上想法一致" },
+      { id: "space", label: "不必强求同步：各自舒服就好" },
+    ],
+  },
+  {
+    id: "q22",
+    dim: "boundary",
+    title: "对方查看你手机/社交账号，你的第一反应更接近？",
+    options: [
+      { id: "ok", label: "可以：我没什么要藏的" },
+      { id: "ask", label: "先问原因：需要理由再决定" },
+      { id: "uncomfortable", label: "不舒服：觉得被审查" },
+      { id: "no", label: "不接受：那是我的隐私" },
+    ],
+  },
+  {
+    id: "q23",
+    dim: "life",
+    title: "周末更想怎么过？",
+    options: [
+      { id: "plan", label: "提前安排好：有期待才踏实" },
+      { id: "half", label: "有个大方向，细节随缘" },
+      { id: "wake", label: "睡醒再说：完全看心情" },
+      { id: "alone", label: "留足独处时间：周末要回血" },
+    ],
+  },
+  {
+    id: "q24",
+    dim: "signal",
+    title: "当对方说“随便/都行”，你更可能？",
+    options: [
+      { id: "decide", label: "我来定：给几个选项或直接选" },
+      { id: "ask", label: "再问一次：想听真实想法" },
+      { id: "annoyed", label: "有点烦：希望对方能拿主意" },
+      { id: "relax", label: "真的随便：我也可以选" },
+    ],
+  },
+  {
+    id: "q25",
+    dim: "conflict",
+    title: "吵完架后，你更需要什么才能“翻篇”？",
+    options: [
+      { id: "apology", label: "明确道歉或和好动作" },
+      { id: "talk", label: "聊清楚原因和感受" },
+      { id: "time", label: "各自冷静一段时间" },
+      { id: "normal", label: "像平时一样相处，自然过去" },
+    ],
+  },
+  {
+    id: "q26",
+    dim: "money",
+    title: "礼物/红包你更看重？",
+    options: [
+      { id: "thought", label: "心意：有没有花心思" },
+      { id: "amount", label: "分量：金额代表重视程度" },
+      { id: "same", label: "对等：彼此付出差不多" },
+      { id: "none", label: "不太在意：不送也行" },
+    ],
+  },
+  {
+    id: "q27",
+    dim: "future",
+    title: "对“见家长/谈婚论嫁”的时间感，你更接近？",
+    options: [
+      { id: "early", label: "稳定了就尽早：给彼此交代" },
+      { id: "ready", label: "等两人都准备好再说" },
+      { id: "slow", label: "不着急：关系好比形式重要" },
+      { id: "avoid", label: "能晚则晚：压力大" },
+    ],
+  },
+  {
+    id: "q28",
+    dim: "intimacy",
+    title: "你更容易因为什么感到“被爱”？",
+    options: [
+      { id: "words", label: "对方说出口的肯定与承诺" },
+      { id: "acts", label: "对方为你做的小事" },
+      { id: "time", label: "对方把时间留给你" },
+      { id: "touch", label: "肢体接触与亲近" },
+    ],
+  },
+  {
+    id: "q29",
+    dim: "boundary",
+    title: "你能接受伴侣有“不和你分享”的圈子或爱好吗？",
+    options: [
+      { id: "yes", label: "完全可以：每个人都需要自己的空间" },
+      { id: "some", label: "部分可以：大致知道就行" },
+      { id: "uncomfortable", label: "会有点不舒服：希望多数事能分享" },
+      { id: "no", label: "不太能：希望彼此透明" },
+    ],
+  },
+  {
+    id: "q30",
+    dim: "life",
+    title: "家务/琐事你更倾向？",
+    options: [
+      { id: "split", label: "明确分工：谁负责什么说清楚" },
+      { id: "together", label: "一起做：边做边聊" },
+      { id: "flex", label: "谁有空谁做：不刻意分" },
+      { id: "one", label: "一人主导、一人搭把手" },
+    ],
+  },
+  {
+    id: "q31",
+    dim: "sync",
+    title: "一天里你最喜欢什么时候？",
+    options: [
+      { id: "morning", label: "早晨：清醒、有干劲" },
+      { id: "noon", label: "午后：阳光正好" },
+      { id: "dusk", label: "傍晚：下班后的松弛" },
+      { id: "night", label: "深夜：安静、属于自己" },
+    ],
+  },
+  {
+    id: "q32",
+    dim: "sync",
+    title: "下雨天更想做什么？",
+    options: [
+      { id: "home", label: "宅家：窝着看剧/看书" },
+      { id: "sleep", label: "睡觉：最好睡到自然醒" },
+      { id: "out", label: "出门：撑伞散步/踩水" },
+      { id: "tea", label: "约人喝茶/咖啡" },
+    ],
+  },
+  {
+    id: "q33",
+    dim: "sync",
+    title: "周末早晨醒来第一件事更常是？",
+    options: [
+      { id: "phone", label: "看手机" },
+      { id: "sleep_more", label: "再睡一会儿" },
+      { id: "eat", label: "起来弄吃的" },
+      { id: "partner", label: "找对方/等对方醒" },
+    ],
+  },
+  {
+    id: "q34",
+    dim: "sync",
+    title: "喝东西你更常选？",
+    options: [
+      { id: "coffee", label: "咖啡" },
+      { id: "tea", label: "茶" },
+      { id: "milk_tea", label: "奶茶/果茶" },
+      { id: "water", label: "白水/苏打" },
+    ],
+  },
+  {
+    id: "q35",
+    dim: "sync",
+    title: "旅行时你更像？",
+    options: [
+      { id: "plan", label: "做攻略的：行程要心里有数" },
+      { id: "follow", label: "跟着走的：你们定我跟着" },
+      { id: "photo", label: "拍照的：记录比去哪重要" },
+      { id: "chill", label: "躺平的：酒店瘫着也行" },
     ],
   },
 ];

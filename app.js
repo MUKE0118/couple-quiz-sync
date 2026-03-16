@@ -540,8 +540,11 @@
     const total = questions.length;
     const rate = total === 0 ? 0 : Math.round((matches.length / total) * 100);
     const stats = computeDimensionStats(state);
-    const animalA = buildAnimalCard(state.a || {});
-    const animalB = buildAnimalCard(state.b || {});
+    let animalA = buildAnimalCard(state.a || {});
+    let animalB = buildAnimalCard(state.b || {});
+    const resolved = ensureDifferentAnimalsIfLowSimilarity(animalA, animalB, rate);
+    animalA = resolved.animalA;
+    animalB = resolved.animalB;
     const nameA = displayName("a", state);
     const nameB = displayName("b", state);
 
@@ -677,8 +680,14 @@
     const nameA = displayName("a", state);
     const nameB = displayName("b", state);
 
-    const animalA = buildAnimalCard(a);
-    const animalB = buildAnimalCard(b);
+    const { matches } = computeMatches(state);
+    const total = questions.length;
+    const matchRate = total === 0 ? 0 : Math.round((matches.length / total) * 100);
+    let animalA = buildAnimalCard(a);
+    let animalB = buildAnimalCard(b);
+    const resolved = ensureDifferentAnimalsIfLowSimilarity(animalA, animalB, matchRate);
+    animalA = resolved.animalA;
+    animalB = resolved.animalB;
 
     const tagA = el.resultCard?.querySelector(".charGrid .animalCard:nth-child(1) .animalCard__tag");
     const tagB = el.resultCard?.querySelector(".charGrid .animalCard:nth-child(2) .animalCard__tag");
@@ -716,23 +725,44 @@
     { emoji: "🦋", name: "蝴蝶", desc: "浪漫随性，重视感觉与仪式感。" },
     { emoji: "🐘", name: "象", desc: "长情记仇，重视承诺与公平。" },
     { emoji: "🐧", name: "企鹅", desc: "专一顾家，重视陪伴与共同目标。" },
+    { emoji: "🦩", name: "火烈鸟", desc: "注重仪式与美感，需要被看见。" },
+    { emoji: "🐿️", name: "松鼠", desc: "爱囤积安全感，习惯提前准备。" },
+    { emoji: "🦝", name: "浣熊", desc: "好奇灵活，喜欢探索与尝试。" },
+    { emoji: "🐴", name: "马", desc: "向往自由与奔跑，需要空间与信任。" },
+    { emoji: "🦈", name: "鲨鱼", desc: "目标感强，直来直去，不喜拖沓。" },
+    { emoji: "🐑", name: "羊", desc: "温和合群，重视归属与陪伴。" },
+    { emoji: "🦂", name: "蝎子", desc: "外冷内热，重视忠诚与深度联结。" },
+    { emoji: "🐸", name: "青蛙", desc: "适应力强，能随环境调整节奏。" },
+    { emoji: "🦀", name: "螃蟹", desc: "外壳坚硬、内心柔软，需要时间打开。" },
+    { emoji: "🐢", name: "龟", desc: "慢热长情，重视稳定与持久。" },
+    { emoji: "🦫", name: "河狸", desc: "务实建设型，喜欢一起完成目标。" },
+    { emoji: "🐤", name: "雏鸟", desc: "依赖与独立并存，正在成长。" },
+    { emoji: "🦥", name: "树懒", desc: "节奏慢，享受当下，不喜催促。" },
+    { emoji: "🐲", name: "龙", desc: "有主见、有魄力，需要被尊重。" },
+    { emoji: "🦄", name: "独角兽", desc: "独特自我，相信特别与唯一。" },
+    { emoji: "🐙", name: "章鱼", desc: "多线并行，灵活应变，需要理解。" },
+    { emoji: "🦜", name: "鹦鹉", desc: "爱表达、重互动，喜欢被回应。" },
+    { emoji: "🐍", name: "蛇", desc: "敏锐直觉，边界清晰，不喜越界。" },
   ];
 
   /** 维度顺序，用于 tie-break 与次维度选择 */
-  const DIM_ORDER = ["signal", "boundary", "conflict", "money", "future", "intimacy", "life"];
+  const DIM_ORDER = ["signal", "boundary", "conflict", "money", "future", "intimacy", "life", "sync"];
 
   /**
-   * 每个主维度对应若干动物（索引）；用「次维度」在顺序中的位置取模，选出其一。
-   * 逻辑：你的作答在哪个维度上最突出（主维度），再结合第二突出的维度（次维度）决定具体动物。
+   * 主维度 → 动物索引（0–29）。动物与维度语义一致，由作答的「维度强度」决定：
+   * - 每题选项有序号，同一维度下序号相加 = 该维度强度；
+   * - 强度最高的维度 = 主维度，次高 = 次维度；
+   * - 主维度确定动物池，次维度在池内取模选出一只。
    */
   const PRIMARY_DIM_TO_ANIMALS = {
-    signal: [3, 7],       // 沟通信号 → 海豚 / 猫头鹰
-    boundary: [0, 5],     // 边界与自由 → 狐狸 / 狼
-    conflict: [4, 7],     // 冲突修复 → 鹿 / 猫头鹰
-    money: [8, 10],       // 金钱与风险 → 熊 / 象
-    future: [2, 11],      // 未来与承诺 → 鹰 / 企鹅
-    intimacy: [6, 9, 3],  // 亲密与表达 → 兔子 / 蝴蝶 / 海豚
-    life: [1, 8],         // 生活节奏 → 猫 / 熊
+    signal: [3, 7, 27, 28],       // 沟通信号 → 海豚/猫头鹰/章鱼/鹦鹉（表达、共情、理性、互动）
+    boundary: [0, 5, 15, 20, 29], // 边界与自由 → 狐狸/狼/马/螃蟹/蛇（边界感、领地、空间、外壳、不越界）
+    conflict: [4, 7, 18, 25],     // 冲突修复 → 鹿/猫头鹰/蝎子/龙（温和、理性、深度联结、被尊重）
+    money: [8, 10, 13, 22],       // 金钱与风险 → 熊/象/松鼠/河狸（踏实、公平、囤积安全感、务实建设）
+    future: [2, 11, 16, 23, 26],  // 未来与承诺 → 鹰/企鹅/鲨鱼/雏鸟/独角兽（目标、共同目标、直进、成长、唯一）
+    intimacy: [6, 9, 12, 17, 1],  // 亲密与表达 → 兔子/蝴蝶/火烈鸟/羊/猫（被倾听、仪式、被看见、归属、安全尊重）
+    life: [1, 14, 19, 21, 24],    // 生活节奏 → 猫/浣熊/青蛙/龟/树懒（独立黏人、灵活、适应、慢热持久、享受当下）
+    sync: [1, 9, 14, 17, 24],     // 默契问答 → 猫/蝴蝶/浣熊/羊/树懒（偏好、小确幸、生活默契）
   };
 
   /** 根据作答计算各维度的「强度」：同一维度下每题选中的选项序号之和（选项越靠后数值越大） */
@@ -760,7 +790,7 @@
   }
 
   /**
-   * 由作答组合得到动物：先算各维度强度 → 主维度 + 次维度 → 查表得到唯一动物。
+   * 由作答组合得到动物：先算各维度强度 → 主维度 + 次维度 → 查表得到唯一动物。返回带 index 便于「相似度<90% 则两人不同动物」规则。
    */
   function buildAnimalCard(answers) {
     const scores = computeDimensionScoresForAnimal(answers || {});
@@ -768,12 +798,24 @@
     const list = PRIMARY_DIM_TO_ANIMALS[primary];
     if (!list || list.length === 0) {
       const fallback = ANIMALS[0];
-      return { emoji: fallback.emoji, name: fallback.name, desc: fallback.desc };
+      return { emoji: fallback.emoji, name: fallback.name, desc: fallback.desc, index: 0 };
     }
     const secondaryRank = DIM_ORDER.indexOf(secondary);
     const idx = list[secondaryRank % list.length];
     const animal = ANIMALS[idx];
-    return { emoji: animal.emoji, name: animal.name, desc: animal.desc };
+    return { emoji: animal.emoji, name: animal.name, desc: animal.desc, index: idx };
+  }
+
+  /** 相似度（一致题数/总题数）< 90% 时两人不能是同一种动物，将 B 换为不同动物。 */
+  function ensureDifferentAnimalsIfLowSimilarity(animalA, animalB, matchRate) {
+    if (matchRate >= 90) return { animalA, animalB };
+    if (animalA.index !== animalB.index) return { animalA, animalB };
+    const n = ANIMALS.length;
+    let newIdx = (animalB.index + 1) % n;
+    while (newIdx === animalA.index && n > 1) newIdx = (newIdx + 1) % n;
+    const b = ANIMALS[newIdx];
+    const animalBNew = { emoji: b.emoji, name: b.name, desc: b.desc, index: newIdx };
+    return { animalA, animalB: animalBNew };
   }
 
   function renderAnimalModalList() {
@@ -943,6 +985,13 @@
           `- 采用“双轨日历”：固定轨（必须做的）+ 随性轨（可临时变）。\n` +
           `- 每周 15 分钟“同步会”：下周各自最忙的一天是哪天？需要对方怎么配合？\n` +
           (count ? `- 本次不一致题数：${count}` : ""),
+      },
+      sync: {
+        title: `生活默契：${name}（${dimStat.rate}%）`,
+        body:
+          `默契问答反映你们在生活偏好（喜欢什么时候、下雨天想干嘛、喝啥、旅行风格）上的重合度。\n` +
+          `不一致很正常，不用“对齐”，可以当轻松话题：一起聊聊为什么选这个，说不定能发现对方的小习惯。\n` +
+          (count ? `- 本次不一致题数：${count}（适合当闲聊素材）` : ""),
       },
     };
 
