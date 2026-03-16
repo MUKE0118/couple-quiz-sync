@@ -1058,7 +1058,7 @@
 
     const tips = [];
 
-    if (highest[0]) {
+    if (highest[0] && highest[0].rate > 0) {
       tips.push({
         title: `你们的强项：${highest[0].name}`,
         body:
