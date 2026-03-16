@@ -4,27 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>情侣契合度测试</title>
-    <link rel="stylesheet" href="./styles.css?v=tui" />
+    <link rel="stylesheet" href="./styles.css?v=apple" />
   </head>
-  <body style="background:#0a0e0a;color:#c8ffb4;">
-    <div class="app tui">
+  <body>
+    <div class="app">
       <header class="header">
-        <div class="tui__topbar">
-          <span class="tui__corner">2025</span>
-          <span class="tui__corner tui__corner--r">07</span>
-        </div>
         <div class="brand">
-          <div class="brand__title">&gt; 情侣契合度测试</div>
-          <div class="brand__subtitle">同一套题，两人分别作答；都提交后解码维度并生成专属角色卡</div>
+          <div class="brand__title">情侣契合度测试</div>
+          <div class="brand__subtitle">同一套题，两个人分别作答；都提交后查看维度分析与你们的动物人格</div>
         </div>
         <div class="header__actions">
-          <button id="btnReset" class="btn btn--ghost" type="button">[ 重置 ]</button>
+          <button id="btnReset" class="btn btn--ghost" type="button">重置</button>
         </div>
       </header>
 
       <main class="main">
         <section class="card">
-          <div class="card__title">[ 在线同步 ] 房间码</div>
+          <div class="card__title">在线同步（房间码）</div>
           <div class="roomRow">
             <div class="roomRow__left">
               <div class="field">
@@ -54,28 +50,37 @@
               </div>
             </div>
           </div>
-          <div class="hint">异地一起玩：两个人打开同一个网页，填同一个同步地址 + 同一个房间码即可实时同步。</div>
+          <div class="howToSync">
+            <div class="howToSync__title">怎么联机？</div>
+            <ol class="howToSync__steps">
+              <li><strong>两个人都打开这个网页</strong>（把链接发给你对象或朋友）。</li>
+              <li><strong>同步服务地址</strong>：两人填<strong>同一串</strong>。例如 <code>wss://couple-quiz-sync-server.onrender.com</code>。填过一次会记住，下次不用再填。</li>
+              <li><strong>房间码</strong>：其中一人点「生成」，把出现的 6 位房间码<strong>发给对方</strong>；两人在「房间码」框里都填<strong>一样的</strong>。</li>
+              <li>两人都点「<strong>加入</strong>」。看到「连接：已连接」且「我的身份」变成 A 或 B，就说明联机成功。</li>
+              <li>一人选 A 答题、一人选 B 答题，答案会<strong>实时同步</strong>。两人都提交后，各自页面都会显示同一份结果和动物人格。</li>
+            </ol>
+          </div>
         </section>
 
         <section class="card">
-          <div class="card__title">[ 选择作答人 ]</div>
+          <div class="card__title">选择作答人</div>
           <div class="switcher" role="tablist" aria-label="选择作答人">
             <button id="btnPersonA" class="pill pill--active" type="button" role="tab" aria-selected="true">
-              [ A ] 第 1 人
+              A（第 1 个人）
             </button>
             <button id="btnPersonB" class="pill" type="button" role="tab" aria-selected="false">
-              [ B ] 第 2 人
+              B（第 2 个人）
             </button>
           </div>
 
           <div class="status">
             <div class="status__item">
-              <div class="status__label">A 提交</div>
-              <div id="statusA" class="badge badge--muted">[ ] 未提交</div>
+              <div class="status__label">A 提交状态</div>
+              <div id="statusA" class="badge badge--muted">未提交</div>
             </div>
             <div class="status__item">
-              <div class="status__label">B 提交</div>
-              <div id="statusB" class="badge badge--muted">[ ] 未提交</div>
+              <div class="status__label">B 提交状态</div>
+              <div id="statusB" class="badge badge--muted">未提交</div>
             </div>
             <div class="status__item status__item--grow">
               <div class="status__label">进度</div>
@@ -90,26 +95,30 @@
         </section>
 
         <section class="card">
-          <div class="card__title">[ 题目 ]</div>
+          <div class="card__title">题目</div>
           <div id="questionHost" class="question"></div>
 
           <div class="nav">
-            <button id="btnPrev" class="btn btn--ghost" type="button">&lt; 上一题</button>
+            <button id="btnPrev" class="btn btn--ghost" type="button">上一题</button>
             <div class="nav__center">
               <span id="qIndexText" class="mono">-</span>
             </div>
-            <button id="btnNext" class="btn" type="button">下一题 &gt;</button>
+            <button id="btnNext" class="btn" type="button">下一题</button>
           </div>
 
           <div class="submitRow">
-            <button id="btnSubmit" class="btn btn--primary" type="button">提交本人的答案 -&gt;</button>
+            <button id="btnSubmit" class="btn btn--primary" type="button">提交本人的答案</button>
             <div id="submitHint" class="hint">提交后仍可修改：重新作答并再次提交会覆盖。</div>
           </div>
         </section>
 
         <section id="resultCard" class="card card--hidden">
-          <div class="card__title">[ 结果 ]</div>
+          <div class="card__title">结果</div>
           <div class="result">
+            <div class="result__shareRow">
+              <button id="btnShareImage" class="btn btn--primary" type="button">生成分享图</button>
+              <span class="result__shareHint">生成一张包含契合度、维度与动物人格的报表图，可保存后分享。</span>
+            </div>
             <div class="result__hero">
               <div class="result__score">
                 <div id="matchCount" class="result__scoreValue">-</div>
@@ -123,47 +132,41 @@
 
             <div class="result__analysis">
               <div class="panel">
-                <div class="panel__title">[ 维度解码 ]</div>
+                <div class="panel__title">维度解码</div>
                 <div id="dimensionGrid" class="dimensionGrid"></div>
                 <div class="panel__hint">提示：一致 ≠ 更好；不一致往往代表“需要对齐的规则/边界”。</div>
               </div>
 
               <div class="panel">
-                <div class="panel__title">[ 建议 ] 可直接照做</div>
+                <div class="panel__title">建议（可直接照做）</div>
                 <div id="adviceHost" class="advice"></div>
               </div>
             </div>
 
             <div class="result__characters">
               <div class="panel">
-                <div class="panel__title">[ 专属角色卡 ]</div>
+                <div class="panel__title">动物人格</div>
                 <div class="charGrid">
-                  <div class="charCard">
-                    <div class="charCard__top">
-                      <div class="charCard__name">A 的角色档案</div>
-                      <button id="btnDownloadA" class="btn btn--ghost btn--sm" type="button">下载</button>
-                    </div>
-                    <div id="charHostA" class="charHost" aria-label="A 的角色卡"></div>
+                  <div class="animalCard">
+                    <div class="animalCard__label">A</div>
+                    <div id="charHostA" class="animalCard__body" aria-label="A 的动物人格"></div>
                   </div>
-                  <div class="charCard">
-                    <div class="charCard__top">
-                      <div class="charCard__name">B 的角色档案</div>
-                      <button id="btnDownloadB" class="btn btn--ghost btn--sm" type="button">下载</button>
-                    </div>
-                    <div id="charHostB" class="charHost" aria-label="B 的角色卡"></div>
+                  <div class="animalCard">
+                    <div class="animalCard__label">B</div>
+                    <div id="charHostB" class="animalCard__body" aria-label="B 的动物人格"></div>
                   </div>
                 </div>
-                <div class="panel__hint">角色是根据作答生成的视觉化档案（本地生成，不上传）。</div>
+                <div class="panel__hint">根据作答生成的动物人格（本地生成，不上传）。</div>
               </div>
             </div>
 
             <div class="result__lists">
               <div class="list">
-                <div class="list__title">[ 一致 ]</div>
+                <div class="list__title">一致的题</div>
                 <div id="matchList" class="list__body"></div>
               </div>
               <div class="list">
-                <div class="list__title">[ 不一致 ]</div>
+                <div class="list__title">不一致的题</div>
                 <div id="diffList" class="list__body"></div>
               </div>
             </div>
@@ -172,7 +175,7 @@
       </main>
 
       <footer class="footer">
-        <div class="footer__text">// 答案存于本机 · 联机需填同步地址与房间码</div>
+        <div class="footer__text">答案存于本机。联机需填同步地址与房间码。</div>
       </footer>
     </div>
 

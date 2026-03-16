@@ -36,8 +36,7 @@
     adviceHost: qs("#adviceHost"),
     charHostA: qs("#charHostA"),
     charHostB: qs("#charHostB"),
-    btnDownloadA: qs("#btnDownloadA"),
-    btnDownloadB: qs("#btnDownloadB"),
+    btnShareImage: qs("#btnShareImage"),
   };
 
   const questions = Array.isArray(window.QUESTIONS) ? window.QUESTIONS : [];
@@ -323,8 +322,8 @@
     const aOk = Boolean(state.submittedA);
     const bOk = Boolean(state.submittedB);
 
-    el.statusA.textContent = aOk ? "[x] 已提交" : "[ ] 未提交";
-    el.statusB.textContent = bOk ? "[x] 已提交" : "[ ] 未提交";
+    el.statusA.textContent = aOk ? "已提交" : "未提交";
+    el.statusB.textContent = bOk ? "已提交" : "未提交";
     el.statusA.className = `badge ${aOk ? "badge--ok" : "badge--muted"}`;
     el.statusB.className = `badge ${bOk ? "badge--ok" : "badge--muted"}`;
   }
@@ -421,6 +420,154 @@
       diffs.length === 0
         ? `<div class="hint">全部一致。你们很同步。</div>`
         : diffs.map((x) => renderItem(x.question, x.a, x.b, false)).join("");
+
+    if (el.btnShareImage) {
+      el.btnShareImage.onclick = async () => {
+        const blob = await drawReportImage(state);
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `情侣契合度报告-${matches.length}-${total}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+      };
+    }
+  }
+
+  function drawReportImage(state) {
+    const { matches, diffs } = computeMatches(state);
+    const total = questions.length;
+    const rate = total === 0 ? 0 : Math.round((matches.length / total) * 100);
+    const stats = computeDimensionStats(state);
+    const animalA = buildAnimalCard(state.a || {});
+    const animalB = buildAnimalCard(state.b || {});
+
+    const W = 600;
+    const H = 960;
+    const scale = 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = W * scale;
+    canvas.height = H * scale;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.scale(scale, scale);
+
+    const bg = "#f5f5f7";
+    const cardBg = "#ffffff";
+    const text = "#1d1d1f";
+    const textSec = "#6e6e73";
+    const textTri = "#86868b";
+    const border = "rgba(0,0,0,0.08)";
+    const font = "PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif";
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = cardBg;
+    roundRect(ctx, 24, 24, W - 48, H - 48, 20);
+    ctx.fill();
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    let y = 72;
+    ctx.fillStyle = text;
+    ctx.font = `600 26px ${font}`;
+    ctx.fillText("情侣契合度测试", 48, y);
+    y += 36;
+    ctx.fillStyle = textTri;
+    ctx.font = `400 13px ${font}`;
+    ctx.fillText("契合度报告", 48, y);
+    y += 48;
+
+    ctx.fillStyle = text;
+    ctx.font = `600 56px ${font}`;
+    const rateStr = rate + "%";
+    const rateW = ctx.measureText(rateStr).width;
+    ctx.fillText(rateStr, (W - rateW) / 2, y);
+    y += 52;
+    ctx.fillStyle = textSec;
+    ctx.font = `400 15px ${font}`;
+    ctx.fillText(`一致 ${matches.length} / ${total} 题`, 48, y);
+    y += 40;
+
+    ctx.strokeStyle = border;
+    ctx.beginPath();
+    ctx.moveTo(48, y);
+    ctx.lineTo(W - 48, y);
+    ctx.stroke();
+    y += 32;
+
+    ctx.fillStyle = textTri;
+    ctx.font = `600 11px ${font}`;
+    ctx.fillText("维度", 48, y);
+    y += 28;
+    const barH = 20;
+    const barW = W - 48 - 48 - 80;
+    for (let i = 0; i < Math.min(stats.length, 6); i++) {
+      const d = stats[i];
+      const pct = Math.max(0, Math.min(100, d.rate));
+      ctx.fillStyle = text;
+      ctx.font = `500 13px ${font}`;
+      ctx.fillText(d.name, 48, y + 14);
+      ctx.fillStyle = textSec;
+      ctx.font = `400 12px ${font}`;
+      ctx.fillText(pct + "%", W - 48 - 36, y + 14);
+      ctx.fillStyle = border;
+      ctx.fillRect(48, y + 18, barW, 6);
+      ctx.fillStyle = text;
+      ctx.fillRect(48, y + 18, (barW * pct) / 100, 6);
+      y += barH + 14;
+    }
+    y += 24;
+
+    ctx.fillStyle = textTri;
+    ctx.font = `600 11px ${font}`;
+    ctx.fillText("动物人格", 48, y);
+    y += 32;
+    ctx.font = `400 36px ${font}`;
+    ctx.fillText(animalA.emoji, 48, y + 28);
+    ctx.fillStyle = text;
+    ctx.font = `600 16px ${font}`;
+    ctx.fillText("A · " + animalA.name, 100, y + 22);
+    ctx.fillStyle = textSec;
+    ctx.font = `400 12px ${font}`;
+    ctx.fillText(animalA.desc, 100, y + 42);
+    y += 72;
+    ctx.font = `400 36px ${font}`;
+    ctx.fillText(animalB.emoji, 48, y + 28);
+    ctx.fillStyle = text;
+    ctx.font = `600 16px ${font}`;
+    ctx.fillText("B · " + animalB.name, 100, y + 22);
+    ctx.fillStyle = textSec;
+    ctx.font = `400 12px ${font}`;
+    ctx.fillText(animalB.desc, 100, y + 42);
+    y += 72;
+
+    ctx.fillStyle = textTri;
+    ctx.font = `400 11px ${font}`;
+    ctx.fillText("情侣契合度测试 · 本地生成", 48, H - 40);
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob || null), "image/png", 1);
+    }).then((blob) => blob);
   }
 
   function renderCharacters(state) {
@@ -428,14 +575,40 @@
     const a = state.a || {};
     const b = state.b || {};
 
-    const aCard = buildCharacterCard("A", a, state);
-    const bCard = buildCharacterCard("B", b, state);
+    const animalA = buildAnimalCard(a);
+    const animalB = buildAnimalCard(b);
 
-    el.charHostA.innerHTML = aCard.svg;
-    el.charHostB.innerHTML = bCard.svg;
+    el.charHostA.innerHTML = `
+      <div class="animalCard__emoji">${escapeHtml(animalA.emoji)}</div>
+      <div class="animalCard__name">${escapeHtml(animalA.name)}</div>
+      <div class="animalCard__desc">${escapeHtml(animalA.desc)}</div>
+    `;
+    el.charHostB.innerHTML = `
+      <div class="animalCard__emoji">${escapeHtml(animalB.emoji)}</div>
+      <div class="animalCard__name">${escapeHtml(animalB.name)}</div>
+      <div class="animalCard__desc">${escapeHtml(animalB.desc)}</div>
+    `;
+  }
 
-    if (el.btnDownloadA) el.btnDownloadA.onclick = () => downloadSvg(aCard.svg, `${aCard.fileBase}.svg`);
-    if (el.btnDownloadB) el.btnDownloadB.onclick = () => downloadSvg(bCard.svg, `${bCard.fileBase}.svg`);
+  const ANIMALS = [
+    { emoji: "🦊", name: "狐狸", desc: "敏锐、有边界感，重视默契与信任。" },
+    { emoji: "🐱", name: "猫", desc: "独立又黏人，需要安全与尊重。" },
+    { emoji: "🦅", name: "鹰", desc: "目标清晰，需要空间与共同方向。" },
+    { emoji: "🐬", name: "海豚", desc: "善于沟通与共情，喜欢陪伴与协作。" },
+    { emoji: "🦌", name: "鹿", desc: "温和敏感，重视稳定与承诺。" },
+    { emoji: "🐺", name: "狼", desc: "忠诚、有领地感，重视默契与分工。" },
+    { emoji: "🐰", name: "兔子", desc: "柔软细腻，需要被倾听与保护。" },
+    { emoji: "🦉", name: "猫头鹰", desc: "理性冷静，喜欢深度对话与规划。" },
+    { emoji: "🐻", name: "熊", desc: "踏实可靠，用行动表达关心。" },
+    { emoji: "🦋", name: "蝴蝶", desc: "浪漫随性，重视感觉与仪式感。" },
+    { emoji: "🐘", name: "象", desc: "长情记仇，重视承诺与公平。" },
+    { emoji: "🐧", name: "企鹅", desc: "专一顾家，重视陪伴与共同目标。" },
+  ];
+
+  function buildAnimalCard(answers) {
+    const seed = seedFromAnswers(answers);
+    const animal = ANIMALS[seed % ANIMALS.length];
+    return { emoji: animal.emoji, name: animal.name, desc: animal.desc };
   }
 
   function renderDimensionAnalysis(state) {
@@ -587,52 +760,6 @@
     return base[dimId] || fallback;
   }
 
-  function buildCharacterCard(label, answers, state) {
-    const seed = seedFromAnswers(answers);
-    const palette = paletteFromSeed(seed);
-    const codename = makeCodename(seed);
-    const archetype = pickFrom(seed, [
-      "Netrunner",
-      "Synth Diplomat",
-      "Chrome Analyst",
-      "Ghost Operator",
-      "Signal Weaver",
-      "Neon Architect",
-      "Protocol Breaker",
-      "Quiet Blade",
-    ]);
-
-    const traits = pickTraits(answers, seed);
-    const signature = buildSignature(label, answers, state);
-    const svg = makeCharacterSvg({ label, codename, archetype, traits, signature, palette, seed });
-    return { svg, fileBase: `cyber-role-${label}-${codename.replaceAll(" ", "-")}` };
-  }
-
-  function buildSignature(label, answers, state) {
-    const otherAnswers = label === "A" ? state.b || {} : state.a || {};
-    const byDim = {};
-
-    for (const q of questions) {
-      const d = q.dim || "misc";
-      if (!byDim[d]) byDim[d] = { total: 0, match: 0 };
-      byDim[d].total += 1;
-      const av = answers[q.id] ?? "";
-      const ov = otherAnswers[q.id] ?? "";
-      if (av && ov && av === ov) byDim[d].match += 1;
-    }
-
-    const dimName = (id) => dimensions.find((x) => x.id === id)?.name || id;
-    const list = Object.entries(byDim).map(([k, v]) => ({
-      id: k,
-      name: dimName(k),
-      rate: v.total ? Math.round((v.match / v.total) * 100) : 0,
-    }));
-    list.sort((a, b) => a.rate - b.rate);
-    const low = list.slice(0, 2).map((x) => x.name).filter(Boolean);
-    const high = [...list].sort((a, b) => b.rate - a.rate).slice(0, 1).map((x) => x.name).filter(Boolean);
-    return { high: high[0] || "", low };
-  }
-
   function seedFromAnswers(answers) {
     const keys = Object.keys(answers || {}).sort();
     const joined = keys.map((k) => `${k}:${answers[k]}`).join("|");
@@ -646,190 +773,6 @@
       h = Math.imul(h, 0x01000193);
     }
     return h >>> 0;
-  }
-
-  function pickFrom(seed, arr) {
-    if (!arr.length) return "";
-    return arr[seed % arr.length];
-  }
-
-  function paletteFromSeed(seed) {
-    const base = [
-      ["#58E6FF", "#B38BFF", "#FF4FD8"],
-      ["#7CF7FF", "#46FF9B", "#B38BFF"],
-      ["#FF4FD8", "#58E6FF", "#FFD36E"],
-      ["#B38BFF", "#58E6FF", "#46FF9B"],
-    ];
-    const p = base[seed % base.length];
-    return { a: p[0], b: p[1], c: p[2] };
-  }
-
-  function makeCodename(seed) {
-    const left = pickFrom(seed, ["NULL", "ECHO", "VANTA", "MIRROR", "VECTOR", "SABLE", "ION", "SPECTRA", "ORBIT"]);
-    const right = (seed % 0xffff).toString(16).toUpperCase().padStart(4, "0");
-    return `${left}-${right}`;
-  }
-
-  function pickTraits(answers, seed) {
-    const map = {
-      talk_now: ["低延迟沟通", "快速拆解", "直球"],
-      cool_down: ["先冷却再对话", "情绪管理", "延迟决策"],
-      text: ["文字表达更强", "结构化输出", "缓冲沟通"],
-      avoid: ["回避升级冲突", "先保全关系", "谨慎"],
-
-      words: ["语言表达", "肯定回路", "共鸣"],
-      time: ["陪伴驱动", "共同行动", "同频"],
-      help: ["行动主义", "解决问题", "可靠"],
-      touch: ["触感亲密", "身体语言", "贴近"],
-      gift: ["仪式感", "记忆点", "惊喜"],
-
-      must: ["高响应期待", "稳定在线", "可追踪"],
-      soon: ["有节奏的连接", "及时接住", "不极端"],
-      ok: ["低压连接", "松弛", "自洽"],
-      pressure: ["反控制", "抗催促", "边界敏感"],
-
-      plan: ["规划型", "风险控制", "可预期"],
-      balance: ["平衡派", "灵活调参", "现实主义"],
-      enjoy: ["体验优先", "即时满足", "冒险一点"],
-      frugal: ["节制", "长期主义", "安全感优先"],
-
-      full: ["高透明", "信息共享", "安全感靠确认"],
-      reasonable: ["合理透明", "关键同步", "边界清晰"],
-      private: ["隐私边界", "自我空间", "不被审查"],
-      separate: ["强独立", "自洽", "不爱解释"],
-
-      describe: ["事实导向", "清晰叙述", "可验证"],
-      reveal: ["情绪可见", "真诚暴露", "高信任"],
-      request: ["需要表达", "可协商", "目标明确"],
-      protect: ["自我保护", "谨慎暴露", "慢热"],
-    };
-
-    const bag = [];
-    for (const k of Object.keys(answers || {})) {
-      const v = answers[k];
-      const t = map[v];
-      if (t) bag.push(...t);
-    }
-    const uniq = [...new Set(bag)];
-    if (uniq.length >= 3) {
-      const start = seed % uniq.length;
-      return [uniq[start], uniq[(start + 1) % uniq.length], uniq[(start + 2) % uniq.length]];
-    }
-    return [
-      pickFrom(seed, ["高敏感", "高稳定", "高自由", "高投入", "低噪声"]),
-      pickFrom(seed >>> 3, ["直觉型", "结构型", "体验型", "规划型"]),
-      pickFrom(seed >>> 7, ["慢热", "快热", "反脆弱", "高共情"]),
-    ];
-  }
-
-  function makeCharacterSvg({ label, codename, archetype, traits, signature, palette, seed }) {
-    const w = 820;
-    const h = 460;
-    const gradId = `grad${seed}`;
-    const glowId = `glow${seed}`;
-    const grainId = `grain${seed}`;
-    const clipId = `clip${seed}`;
-
-    const hi = signature?.high ? `优势维度：${signature.high}` : "";
-    const lo = signature?.low?.length ? `风险维度：${signature.low.join(" / ")}` : "";
-
-    return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" role="img" aria-label="角色卡 ${label}">
-  <defs>
-    <linearGradient id="${gradId}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${palette.a}" stop-opacity=".14"/>
-      <stop offset=".55" stop-color="${palette.b}" stop-opacity=".12"/>
-      <stop offset="1" stop-color="${palette.c}" stop-opacity=".10"/>
-    </linearGradient>
-    <filter id="${glowId}">
-      <feGaussianBlur stdDeviation="7" result="b"/>
-      <feMerge>
-        <feMergeNode in="b"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <filter id="${grainId}">
-      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/>
-      <feColorMatrix type="matrix" values="
-        1 0 0 0 0
-        0 1 0 0 0
-        0 0 1 0 0
-        0 0 0 .05 0"/>
-    </filter>
-    <clipPath id="${clipId}">
-      <rect x="16" y="16" width="${w - 32}" height="${h - 32}" rx="22"/>
-    </clipPath>
-  </defs>
-
-  <g clip-path="url(#${clipId})">
-    <rect x="16" y="16" width="${w - 32}" height="${h - 32}" rx="22" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.11)"/>
-    <rect x="16" y="16" width="${w - 32}" height="${h - 32}" rx="22" fill="url(#${gradId})"/>
-    <rect x="16" y="16" width="${w - 32}" height="${h - 32}" rx="22" filter="url(#${grainId})" opacity=".7"/>
-
-    <path d="M44 92 Q44 44 92 44 L728 44 Q776 44 776 92 L776 368 Q776 416 728 416 L92 416 Q44 416 44 368 Z"
-          fill="none" stroke="rgba(255,255,255,.10)"/>
-    <path d="M52 100 Q52 52 100 52 L320 52"
-          fill="none" stroke="${palette.a}" stroke-opacity=".34" filter="url(#${glowId})"/>
-    <path d="M768 334 L768 360 Q768 408 720 408 L640 408"
-          fill="none" stroke="${palette.c}" stroke-opacity=".28" filter="url(#${glowId})"/>
-
-    <g filter="url(#${glowId})">
-      <path d="M548 330 C520 290, 512 268, 520 236 C534 190, 566 164, 606 160 C646 164, 678 190, 692 236 C700 268, 692 290, 664 330"
-            fill="rgba(0,0,0,.26)" stroke="rgba(255,255,255,.10)"/>
-      <path d="M586 148 C566 128, 566 103, 586 87 C606 71, 635 72, 651 94 C667 116, 662 140, 642 152"
-            fill="rgba(0,0,0,.30)" stroke="rgba(255,255,255,.10)"/>
-      <path d="M574 118 L660 110" stroke="${palette.a}" stroke-opacity=".40" stroke-width="3"/>
-      <path d="M574 128 L660 120" stroke="${palette.c}" stroke-opacity=".30" stroke-width="2"/>
-      <path d="M548 252 C590 238, 634 238, 676 252" stroke="${palette.b}" stroke-opacity=".32" stroke-width="2"/>
-      <circle cx="606" cy="246" r="4" fill="${palette.a}" fill-opacity=".50"/>
-      <circle cx="626" cy="248" r="3" fill="${palette.c}" fill-opacity=".45"/>
-      <circle cx="586" cy="248" r="3" fill="${palette.b}" fill-opacity=".42"/>
-    </g>
-
-    <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">
-      <text x="56" y="90" fill="rgba(255,255,255,.70)" font-size="12">SUBJECT</text>
-      <text x="56" y="120" fill="rgba(255,255,255,.92)" font-size="22" font-weight="800">${escapeXml(codename)}</text>
-      <text x="56" y="148" fill="rgba(255,255,255,.70)" font-size="12">ARCHETYPE</text>
-      <text x="56" y="170" fill="rgba(255,255,255,.86)" font-size="14" font-weight="700">${escapeXml(archetype)}</text>
-
-      <text x="56" y="214" fill="rgba(255,255,255,.70)" font-size="12">TRAITS</text>
-      <text x="56" y="238" fill="rgba(255,255,255,.84)" font-size="13">${escapeXml(traits[0] || "")}</text>
-      <text x="56" y="262" fill="rgba(255,255,255,.84)" font-size="13">${escapeXml(traits[1] || "")}</text>
-      <text x="56" y="286" fill="rgba(255,255,255,.84)" font-size="13">${escapeXml(traits[2] || "")}</text>
-
-      <text x="56" y="334" fill="rgba(255,255,255,.70)" font-size="12">COUPLE-SYNC</text>
-      <text x="56" y="358" fill="rgba(255,255,255,.80)" font-size="12">${escapeXml(hi)}</text>
-      <text x="56" y="380" fill="rgba(255,255,255,.66)" font-size="12">${escapeXml(lo)}</text>
-    </g>
-
-    <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">
-      <text x="${w - 56}" y="${h - 44}" text-anchor="end" fill="rgba(255,255,255,.52)" font-size="11">ID ${seed.toString(16).toUpperCase().padStart(8, "0")}</text>
-      <text x="${w - 56}" y="${h - 24}" text-anchor="end" fill="rgba(255,255,255,.72)" font-size="11">${escapeXml(`ROLE ${label}`)}</text>
-    </g>
-  </g>
-</svg>
-    `.trim();
-  }
-
-  function escapeXml(s) {
-    return String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&apos;");
-  }
-
-  function downloadSvg(svgString, filename) {
-    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
   }
 
   function renderItem(question, a, b, ok) {
