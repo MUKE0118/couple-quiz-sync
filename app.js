@@ -346,11 +346,13 @@
     const canvas = el.eggCanvas;
     if (!wrap || !canvas) return;
     if (eggAnimationId) cancelAnimationFrame(eggAnimationId);
+    wrap.classList.add("egg-wrap--on");
+    wrap.setAttribute("aria-hidden", "false");
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let w = 0, h = 0;
     function resize() {
-      w = canvas.offsetWidth || window.innerWidth;
-      h = canvas.offsetHeight || window.innerHeight;
+      w = Math.max(window.innerWidth, document.documentElement.clientWidth || 0) || 300;
+      h = Math.max(window.innerHeight, document.documentElement.clientHeight || 0) || 400;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = w + "px";
@@ -442,8 +444,6 @@
 
         eggAnimationId = requestAnimationFrame(tick);
       }
-      wrap.classList.add("egg-wrap--on");
-      wrap.setAttribute("aria-hidden", "false");
       addRocket();
       tick();
     } else if (kind === "explosion") {
@@ -502,8 +502,6 @@
         }
         eggAnimationId = requestAnimationFrame(tick);
       }
-      wrap.classList.add("egg-wrap--on");
-      wrap.setAttribute("aria-hidden", "false");
       tick();
     }
   }

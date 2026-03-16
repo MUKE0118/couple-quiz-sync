@@ -782,6 +782,9 @@ body {
 
 /* ========== 手机端适配 ========== */
 @media (max-width: 600px) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
   .app {
     padding: 16px 12px 32px;
     padding-left: max(12px, env(safe-area-inset-left));
@@ -857,6 +860,12 @@ body {
     grid-template-columns: 1fr auto auto;
     gap: 8px;
   }
+  .roomJoin .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
   .howToSync {
     padding: 16px;
     margin-top: 16px;
@@ -886,6 +895,19 @@ body {
   .item__q { font-size: 15px; }
   .reportPreview__inner { padding: 12px; }
   .reportPreview__img { max-height: 70vh; }
+  .adviceItem {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--separator);
+  }
+  .adviceItem:last-child { border-bottom: none; }
+  .adviceItem__title { font-size: 16px; margin-bottom: 10px; }
+  .adviceItem__body {
+    font-size: 15px;
+    line-height: 1.6;
+    word-break: break-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+  }
 }
 
 /* 查看所有动物性格：手机可点 + 弹窗全屏 */
@@ -949,13 +971,21 @@ body {
   .animalModalCard__desc { font-size: 14px; }
 }
 
-/* 彩蛋层：全屏、不阻挡点击、最上层 */
+/* 彩蛋层：全屏、不阻挡点击、最上层；手机端适配视口与安全区 */
 .egg-wrap {
   position: fixed;
   inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   z-index: 9998;
   pointer-events: none;
   display: none;
+  touch-action: none;
 }
 .egg-wrap.egg-wrap--on {
   display: block;
@@ -964,6 +994,14 @@ body {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: contain;
+}
+@media (max-width: 600px) {
+  .egg-wrap {
+    width: 100vw;
+    height: 100dvh;
+    height: 100vh;
+  }
 }
 
 /* 输入框 16px 避免 iOS 自动缩放 */
