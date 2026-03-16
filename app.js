@@ -206,6 +206,13 @@
       } catch {}
       if (!msg || typeof msg !== "object") return;
 
+      function ensureStateShape(s) {
+        if (!s) return s;
+        s.a = s.a && typeof s.a === "object" ? s.a : {};
+        s.b = s.b && typeof s.b === "object" ? s.b : {};
+        return s;
+      }
+
       if (msg.type === "joined") {
         myRole = msg.role || null;
         setRoleBadge(myRole);
@@ -215,7 +222,7 @@
           const mine = myRole === "a" ? "a" : "b";
           incoming[mine] = { ...(incoming[mine] || {}), ...(local[mine] || {}) };
         }
-        remoteState = incoming;
+        remoteState = ensureStateShape(incoming || { a: {}, b: {}, submittedA: false, submittedB: false });
         if (myRole === "a" || myRole === "b") setPerson(myRole);
         render();
         return;
@@ -227,7 +234,7 @@
           const mine = myRole === "a" ? "a" : "b";
           incoming[mine] = { ...(incoming[mine] || {}), ...(remoteState?.[mine] || {}) };
         }
-        remoteState = incoming;
+        remoteState = ensureStateShape(incoming || { a: {}, b: {} });
         render();
         return;
       }
@@ -422,6 +429,12 @@
         // 联机时只允许编辑自己的答案，避免误改对方
         if (remoteState && myRole !== currentPerson) return;
         const s = activeState();
+        if (!s) return;
+        if (currentPerson === "a") {
+          if (!s.a || typeof s.a !== "object") s.a = {};
+        } else {
+          if (!s.b || typeof s.b !== "object") s.b = {};
+        }
         const a = getAnswersFor(currentPerson, s);
         a[q.id] = value;
         if (!remoteState) saveState(s);
