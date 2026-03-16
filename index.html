@@ -72,14 +72,24 @@
               B（第 2 个人）
             </button>
           </div>
+          <div class="nicknameRow">
+            <div class="field field--sm">
+              <label class="field__label" for="nicknameA">A 的昵称</label>
+              <input id="nicknameA" class="input input--sm" type="text" placeholder="选填，如：小明" maxlength="20" />
+            </div>
+            <div class="field field--sm">
+              <label class="field__label" for="nicknameB">B 的昵称</label>
+              <input id="nicknameB" class="input input--sm" type="text" placeholder="选填，如：小红" maxlength="20" />
+            </div>
+          </div>
 
           <div class="status">
             <div class="status__item">
-              <div class="status__label">A 提交状态</div>
+              <div id="statusLabelA" class="status__label">A 提交状态</div>
               <div id="statusA" class="badge badge--muted">未提交</div>
             </div>
             <div class="status__item">
-              <div class="status__label">B 提交状态</div>
+              <div id="statusLabelB" class="status__label">B 提交状态</div>
               <div id="statusB" class="badge badge--muted">未提交</div>
             </div>
             <div class="status__item status__item--grow">

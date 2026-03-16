@@ -206,6 +206,11 @@ body {
   transition: background 0.2s, border-color 0.2s;
 }
 .btn:hover { background: var(--fill); border-color: rgba(0,0,0,0.12); }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .btn--primary {
   background: var(--text);
   border-color: var(--text);
@@ -253,6 +258,14 @@ body {
 }
 .input:focus { border-color: var(--text); box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
 .input--mono { font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+.input--sm { padding: 10px 12px; font-size: 14px; }
+.nicknameRow {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 16px;
+}
+.field--sm .field__label { margin-bottom: 6px; font-size: 12px; }
 .roomJoin {
   display: grid;
   grid-template-columns: 1fr auto auto;

@@ -17,7 +17,7 @@ const wss = new WebSocketServer({ server });
  * Room state lives in memory (simple + cheap).
  * For production persistence, swap to Redis/DB.
  */
-const rooms = new Map(); // roomCode -> { a, b, submittedA, submittedB, updatedAt }
+const rooms = new Map(); // roomCode -> { a, b, submittedA, submittedB, nicknameA, nicknameB, updatedAt }
 
 function now() {
   return Date.now();
@@ -34,7 +34,7 @@ function getRoom(code) {
   const c = normalizeRoom(code);
   if (!c) return null;
   if (!rooms.has(c)) {
-    rooms.set(c, { a: {}, b: {}, submittedA: false, submittedB: false, updatedAt: now() });
+    rooms.set(c, { a: {}, b: {}, submittedA: false, submittedB: false, nicknameA: "", nicknameB: "", updatedAt: now() });
   }
   return { code: c, state: rooms.get(c) };
 }
@@ -128,6 +128,12 @@ wss.on("connection", (ws) => {
         if (role === "a") room.state.submittedA = patch.submitted;
         if (role === "b") room.state.submittedB = patch.submitted;
       }
+      if (typeof patch.nicknameA === "string" && role === "a") {
+        room.state.nicknameA = String(patch.nicknameA).slice(0, 20);
+      }
+      if (typeof patch.nicknameB === "string" && role === "b") {
+        room.state.nicknameB = String(patch.nicknameB).slice(0, 20);
+      }
 
       room.state.updatedAt = now();
       broadcast(room.code, { type: "state", room: room.code, state: room.state });
@@ -143,6 +149,8 @@ wss.on("connection", (ws) => {
       room.state.b = {};
       room.state.submittedA = false;
       room.state.submittedB = false;
+      room.state.nicknameA = "";
+      room.state.nicknameB = "";
       room.state.updatedAt = now();
       broadcast(room.code, { type: "state", room: room.code, state: room.state });
       return;

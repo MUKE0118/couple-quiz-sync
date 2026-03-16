@@ -2,7 +2,7 @@
   const STORAGE_KEY = "couple-quiz:v1";
   const SYNC_CFG_KEY = "couple-quiz:sync:v1";
 
-  /** @typedef {{ a?: Record<string,string>, b?: Record<string,string>, submittedA?: boolean, submittedB?: boolean }} State */
+  /** @typedef {{ a?: Record<string,string>, b?: Record<string,string>, submittedA?: boolean, submittedB?: boolean, nicknameA?: string, nicknameB?: string }} State */
 
   const qs = (sel) => document.querySelector(sel);
 
@@ -16,6 +16,10 @@
     btnReset: qs("#btnReset"),
     btnPersonA: qs("#btnPersonA"),
     btnPersonB: qs("#btnPersonB"),
+    nicknameA: qs("#nicknameA"),
+    nicknameB: qs("#nicknameB"),
+    statusLabelA: qs("#statusLabelA"),
+    statusLabelB: qs("#statusLabelB"),
     statusA: qs("#statusA"),
     statusB: qs("#statusB"),
     progressFill: qs("#progressFill"),
@@ -72,16 +76,19 @@
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { a: {}, b: {}, submittedA: false, submittedB: false };
+      if (!raw) return { a: {}, b: {}, submittedA: false, submittedB: false, nicknameA: "", nicknameB: "" };
       const parsed = JSON.parse(raw);
+      const nick = (v) => (typeof v === "string" ? String(v).trim().slice(0, 20) : "");
       return {
         a: parsed?.a && typeof parsed.a === "object" ? parsed.a : {},
         b: parsed?.b && typeof parsed.b === "object" ? parsed.b : {},
         submittedA: Boolean(parsed?.submittedA),
         submittedB: Boolean(parsed?.submittedB),
+        nicknameA: nick(parsed?.nicknameA),
+        nicknameB: nick(parsed?.nicknameB),
       };
     } catch {
-      return { a: {}, b: {}, submittedA: false, submittedB: false };
+      return { a: {}, b: {}, submittedA: false, submittedB: false, nicknameA: "", nicknameB: "" };
     }
   }
 
@@ -235,6 +242,13 @@
     return person === "a" ? state.a : state.b;
   }
 
+  /** @param {State} state */
+  function displayName(person, state) {
+    if (!state) return person === "a" ? "A" : "B";
+    const name = person === "a" ? (state.nicknameA || "").trim() : (state.nicknameB || "").trim();
+    return name || (person === "a" ? "A" : "B");
+  }
+
   function setSubmitted(person, state, value) {
     if (person === "a") state.submittedA = value;
     else state.submittedB = value;
@@ -325,7 +339,8 @@
   function renderStatus(state) {
     const aOk = Boolean(state.submittedA);
     const bOk = Boolean(state.submittedB);
-
+    if (el.statusLabelA) el.statusLabelA.textContent = displayName("a", state) + " 提交状态";
+    if (el.statusLabelB) el.statusLabelB.textContent = displayName("b", state) + " 提交状态";
     el.statusA.textContent = aOk ? "已提交" : "未提交";
     el.statusB.textContent = bOk ? "已提交" : "未提交";
     el.statusA.className = `badge ${aOk ? "badge--ok" : "badge--muted"}`;
@@ -390,7 +405,7 @@
     const s2 = loadState();
     const submitEnabled = canSubmit(currentPerson, s2);
     el.btnSubmit.disabled = !submitEnabled;
-    el.btnSubmit.textContent = `提交 ${currentPerson.toUpperCase()} 的答案`;
+    el.btnSubmit.textContent = `提交 ${displayName(currentPerson, s2)} 的答案`;
 
     const submitted = isSubmitted(currentPerson, s2);
     el.submitHint.textContent = submitted
@@ -417,15 +432,17 @@
     renderAdvice(state);
     renderCharacters(state);
 
+    const nameA = displayName("a", state);
+    const nameB = displayName("b", state);
     el.matchList.innerHTML =
       matches.length === 0
         ? `<div class="hint">暂时没有完全一致的题（也没关系，可以看看不一致的点）。</div>`
-        : matches.map((x) => renderItem(x.question, x.a, x.b, true)).join("");
+        : matches.map((x) => renderItem(x.question, x.a, x.b, true, nameA, nameB)).join("");
 
     el.diffList.innerHTML =
       diffs.length === 0
         ? `<div class="hint">全部一致。你们很同步。</div>`
-        : diffs.map((x) => renderItem(x.question, x.a, x.b, false)).join("");
+        : diffs.map((x) => renderItem(x.question, x.a, x.b, false, nameA, nameB)).join("");
 
     if (el.btnShareImage) {
       el.btnShareImage.onclick = async () => {
@@ -433,7 +450,8 @@
         if (!blob) return;
         if (currentReportUrl) URL.revokeObjectURL(currentReportUrl);
         currentReportUrl = URL.createObjectURL(blob);
-        const filename = `情侣契合度报告-${matches.length}-${total}.png`;
+        const safe = (s) => String(s).replace(/[/\\:*?"<>|]/g, "_").slice(0, 20) || "report";
+        const filename = `情侣契合度报告-${safe(nameA)}-${safe(nameB)}-${matches.length}-${total}.png`;
         if (el.reportPreviewImg) {
           el.reportPreviewImg.src = currentReportUrl;
           el.reportPreviewImg.style.display = "block";
@@ -461,6 +479,8 @@
     const stats = computeDimensionStats(state);
     const animalA = buildAnimalCard(state.a || {});
     const animalB = buildAnimalCard(state.b || {});
+    const nameA = displayName("a", state);
+    const nameB = displayName("b", state);
 
     const W = 560;
     const H = 920;
@@ -549,7 +569,7 @@
     ctx.fillText(animalA.emoji, pad, y + 32);
     ctx.fillStyle = text;
     ctx.font = `600 15px ${font}`;
-    ctx.fillText("A · " + animalA.name, pad + 52, y + 20);
+    ctx.fillText(nameA + " · " + animalA.name, pad + 52, y + 20);
     ctx.fillStyle = textSec;
     ctx.font = `400 12px ${font}`;
     ctx.fillText(animalA.desc, pad + 52, y + 40);
@@ -558,7 +578,7 @@
     ctx.fillText(animalB.emoji, pad, y + 32);
     ctx.fillStyle = text;
     ctx.font = `600 15px ${font}`;
-    ctx.fillText("B · " + animalB.name, pad + 52, y + 20);
+    ctx.fillText(nameB + " · " + animalB.name, pad + 52, y + 20);
     ctx.fillStyle = textSec;
     ctx.font = `400 12px ${font}`;
     ctx.fillText(animalB.desc, pad + 52, y + 40);
@@ -591,9 +611,16 @@
     if (!el.charHostA || !el.charHostB) return;
     const a = state.a || {};
     const b = state.b || {};
+    const nameA = displayName("a", state);
+    const nameB = displayName("b", state);
 
     const animalA = buildAnimalCard(a);
     const animalB = buildAnimalCard(b);
+
+    const tagA = el.resultCard?.querySelector(".charGrid .animalCard:nth-child(1) .animalCard__tag");
+    const tagB = el.resultCard?.querySelector(".charGrid .animalCard:nth-child(2) .animalCard__tag");
+    if (tagA) tagA.textContent = nameA;
+    if (tagB) tagB.textContent = nameB;
 
     el.charHostA.innerHTML = `
       <div class="animalCard__emoji" role="img" aria-label="${escapeHtml(animalA.name)}">${escapeHtml(animalA.emoji)}</div>
@@ -609,6 +636,8 @@
         <div class="animalCard__desc">${escapeHtml(animalB.desc)}</div>
       </div>
     `;
+    el.charHostA.setAttribute("aria-label", nameA + " 的动物人格");
+    el.charHostB.setAttribute("aria-label", nameB + " 的动物人格");
   }
 
   const ANIMALS = [
@@ -796,15 +825,17 @@
     return h >>> 0;
   }
 
-  function renderItem(question, a, b, ok) {
-    const aLabel = a ? optionLabel(question, a) : "（A 未作答）";
-    const bLabel = b ? optionLabel(question, b) : "（B 未作答）";
+  function renderItem(question, a, b, ok, nameA, nameB) {
+    const na = nameA || "A";
+    const nb = nameB || "B";
+    const aLabel = a ? optionLabel(question, a) : "（" + na + " 未作答）";
+    const bLabel = b ? optionLabel(question, b) : "（" + nb + " 未作答）";
     return `
       <div class="item">
         <div class="item__q">${escapeHtml(question.title)}</div>
         <div class="item__a">
-          <span class="tag ${ok ? "tag--ok" : "tag--diff"}">A：${escapeHtml(aLabel)}</span>
-          <span class="tag ${ok ? "tag--ok" : "tag--diff"}">B：${escapeHtml(bLabel)}</span>
+          <span class="tag ${ok ? "tag--ok" : "tag--diff"}">${escapeHtml(na)}：${escapeHtml(aLabel)}</span>
+          <span class="tag ${ok ? "tag--ok" : "tag--diff"}">${escapeHtml(nb)}：${escapeHtml(bLabel)}</span>
         </div>
       </div>
     `;
@@ -821,6 +852,8 @@
 
   function render() {
     const state = activeState();
+    if (el.nicknameA) el.nicknameA.value = (state.nicknameA ?? "") || "";
+    if (el.nicknameB) el.nicknameB.value = (state.nicknameB ?? "") || "";
     renderStatus(state);
     renderProgress(state);
     renderQuestion(state);
@@ -831,8 +864,37 @@
   el.btnPersonA.addEventListener("click", () => setPerson("a"));
   el.btnPersonB.addEventListener("click", () => setPerson("b"));
 
+  function applyNickname(person, value) {
+    const state = activeState();
+    const v = String(value || "").trim().slice(0, 20);
+    if (person === "a") state.nicknameA = v;
+    else state.nicknameB = v;
+    if (!remoteState) saveState(state);
+    else if (myRole === person) maybeSyncPatch(person === "a" ? { nicknameA: v } : { nicknameB: v });
+    render();
+  }
+  if (el.nicknameA) {
+    el.nicknameA.addEventListener("input", () => applyNickname("a", el.nicknameA.value));
+    el.nicknameA.addEventListener("blur", () => applyNickname("a", el.nicknameA.value));
+  }
+  if (el.nicknameB) {
+    el.nicknameB.addEventListener("input", () => applyNickname("b", el.nicknameB.value));
+    el.nicknameB.addEventListener("blur", () => applyNickname("b", el.nicknameB.value));
+  }
+
   el.btnPrev.addEventListener("click", () => setIndex(currentIndex - 1));
-  el.btnNext.addEventListener("click", () => setIndex(currentIndex + 1));
+  el.btnNext.addEventListener("click", () => {
+    const state = activeState();
+    const q = questions[currentIndex];
+    if (!q) return;
+    const answers = getAnswersFor(currentPerson, state);
+    const selected = answers?.[q.id] ?? "";
+    if (!selected) {
+      el.btnNext.setAttribute("title", "请先选择本题答案");
+      return;
+    }
+    if (currentIndex < questions.length - 1) setIndex(currentIndex + 1);
+  });
 
   el.btnSubmit.addEventListener("click", () => {
     const state = activeState();
@@ -849,8 +911,10 @@
 
     const other = currentPerson === "a" ? "b" : "a";
     const otherSubmitted = isSubmitted(other, state);
+    const curName = displayName(currentPerson, state);
+    const otherName = displayName(other, state);
     if (!otherSubmitted) {
-      alert(`已提交 ${currentPerson.toUpperCase()} 的答案。现在切换到 ${other.toUpperCase()} 继续作答。`);
+      alert(`已提交 ${curName} 的答案。现在切换到 ${otherName} 继续作答。`);
       setPerson(other);
       setIndex(0);
     } else {
