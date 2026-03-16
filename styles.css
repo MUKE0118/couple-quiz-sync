@@ -180,6 +180,14 @@ body {
 .option:hover { background: var(--fill); border-color: rgba(0,0,0,0.12); }
 .option input { accent-color: var(--text); }
 .option__label { font-size: 15px; color: var(--text); line-height: 1.35; }
+.option--disabled { opacity: 0.75; cursor: default; }
+.option--disabled input { cursor: not-allowed; }
+.question__viewOnly {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
 
 /* Nav */
 .nav {
@@ -584,6 +592,131 @@ body {
   .animalCard__desc { max-width: 200px; }
 }
 
+.btn--link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn--link:hover { opacity: 0.8; }
+
+/* 查看所有动物性格 弹窗 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0.2s, opacity 0.2s;
+}
+.modal.modal--open {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+}
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+.modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--separator);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--separator);
+  flex-shrink: 0;
+}
+.modal__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal__close {
+  background: transparent;
+  border: none;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.modal__close:hover { color: var(--text); background: var(--fill); }
+.modal__note {
+  margin: 0 24px 16px;
+  padding: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.animalModalList {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 420px) {
+  .animalModalList { grid-template-columns: 1fr 1fr; }
+}
+.animalModalCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: var(--fill);
+  border-radius: var(--radius);
+  border: 1px solid var(--separator);
+}
+.animalModalCard__emoji {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: 50%;
+}
+.animalModalCard__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.animalModalCard__desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
 /* Lists */
 .result__lists { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 600px) { .result__lists { grid-template-columns: 1fr 1fr; } }
@@ -624,3 +757,4 @@ body {
   font-size: 13px;
   color: var(--text-tertiary);
 }
+.footer .btn--link { margin-left: 6px; }

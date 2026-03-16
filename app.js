@@ -44,6 +44,12 @@
     reportPreviewWrap: qs("#reportPreviewWrap"),
     reportPreviewImg: qs("#reportPreviewImg"),
     btnDownloadReport: qs("#btnDownloadReport"),
+    btnViewAllAnimals: qs("#btnViewAllAnimals"),
+    btnViewAllAnimalsFooter: qs("#btnViewAllAnimalsFooter"),
+    animalModal: qs("#animalModal"),
+    animalModalList: qs("#animalModalList"),
+    animalModalClose: qs("#animalModalClose"),
+    animalModalBackdrop: qs("#animalModalBackdrop"),
   };
   let currentReportUrl = null;
 
@@ -203,14 +209,25 @@
       if (msg.type === "joined") {
         myRole = msg.role || null;
         setRoleBadge(myRole);
-        remoteState = msg.state || null;
+        const incoming = msg.state || null;
+        if (incoming && (myRole === "a" || myRole === "b")) {
+          const local = loadState();
+          const mine = myRole === "a" ? "a" : "b";
+          incoming[mine] = { ...(incoming[mine] || {}), ...(local[mine] || {}) };
+        }
+        remoteState = incoming;
         if (myRole === "a" || myRole === "b") setPerson(myRole);
         render();
         return;
       }
 
       if (msg.type === "state") {
-        remoteState = msg.state || null;
+        const incoming = msg.state || null;
+        if (incoming && (myRole === "a" || myRole === "b")) {
+          const mine = myRole === "a" ? "a" : "b";
+          incoming[mine] = { ...(incoming[mine] || {}), ...(remoteState?.[mine] || {}) };
+        }
+        remoteState = incoming;
         render();
         return;
       }
@@ -231,15 +248,19 @@
     if (!room || !ws || ws.readyState !== WebSocket.OPEN) return;
     if (myRole !== "a" && myRole !== "b") return;
 
-    // Throttle a bit to avoid spamming.
-    const t = Date.now();
-    if (t - lastSentAt < 80) return;
-    lastSentAt = t;
+    const isSubmitOnly = patch && typeof patch.submitted === "boolean" && !patch.answers;
+    if (!isSubmitOnly) {
+      const t = Date.now();
+      if (t - lastSentAt < 80) return;
+      lastSentAt = t;
+    }
     wsSend({ type: "update", patch });
   }
 
   function getAnswersFor(person, state) {
-    return person === "a" ? state.a : state.b;
+    if (!state) return {};
+    const ans = person === "a" ? state.a : state.b;
+    return ans && typeof ans === "object" ? ans : {};
   }
 
   /** @param {State} state */
@@ -333,16 +354,26 @@
 
   function canSubmit(person, state) {
     const answers = getAnswersFor(person, state);
-    return questions.every((q) => Boolean(answers?.[q.id]));
+    const total = questions.length;
+    const done = questions.reduce((acc, q) => acc + (answers[q.id] ? 1 : 0), 0);
+    return done >= total;
+  }
+
+  function answerCount(person, state) {
+    const answers = getAnswersFor(person, state);
+    return questions.reduce((acc, q) => acc + (answers?.[q.id] ? 1 : 0), 0);
   }
 
   function renderStatus(state) {
+    const total = questions.length;
+    const countA = answerCount("a", state);
+    const countB = answerCount("b", state);
     const aOk = Boolean(state.submittedA);
     const bOk = Boolean(state.submittedB);
-    if (el.statusLabelA) el.statusLabelA.textContent = displayName("a", state) + " 提交状态";
-    if (el.statusLabelB) el.statusLabelB.textContent = displayName("b", state) + " 提交状态";
-    el.statusA.textContent = aOk ? "已提交" : "未提交";
-    el.statusB.textContent = bOk ? "已提交" : "未提交";
+    if (el.statusLabelA) el.statusLabelA.textContent = displayName("a", state) + " 进度";
+    if (el.statusLabelB) el.statusLabelB.textContent = displayName("b", state) + " 进度";
+    el.statusA.textContent = `${countA}/${total} 题 · ${aOk ? "已提交" : "未提交"}`;
+    el.statusB.textContent = `${countB}/${total} 题 · ${bOk ? "已提交" : "未提交"}`;
     el.statusA.className = `badge ${aOk ? "badge--ok" : "badge--muted"}`;
     el.statusB.className = `badge ${bOk ? "badge--ok" : "badge--muted"}`;
   }
@@ -361,14 +392,16 @@
     const q = questions[currentIndex];
     const answers = getAnswersFor(currentPerson, state);
     const selected = answers?.[q.id] ?? "";
+    const isViewOnly = Boolean(remoteState && myRole !== currentPerson);
 
     const optionsHtml = q.options
       .map((opt) => {
         const checked = opt.id === selected ? "checked" : "";
         const inputId = `${currentPerson}-${q.id}-${opt.id}`;
+        const disabled = isViewOnly ? " disabled" : "";
         return `
-          <label class="option" for="${inputId}">
-            <input type="radio" name="${currentPerson}-${q.id}" id="${inputId}" value="${opt.id}" ${checked} />
+          <label class="option ${isViewOnly ? "option--disabled" : ""}" for="${inputId}">
+            <input type="radio" name="${currentPerson}-${q.id}" id="${inputId}" value="${opt.id}" ${checked}${disabled} />
             <div class="option__label">${escapeHtml(opt.label)}</div>
           </label>
         `;
@@ -379,12 +412,15 @@
       <div class="question__title">${escapeHtml(q.title)}</div>
       ${q.desc ? `<div class="question__desc">${escapeHtml(q.desc)}</div>` : ""}
       <div class="options">${optionsHtml}</div>
+      ${isViewOnly ? `<p class="question__viewOnly">当前为对方视角，仅可查看进度，由对方本人作答。</p>` : ""}
     `;
 
     el.questionHost.querySelectorAll('input[type="radio"]').forEach((input) => {
       input.addEventListener("change", (e) => {
         const value = e.target?.value;
         if (!value) return;
+        // 联机时只允许编辑自己的答案，避免误改对方
+        if (remoteState && myRole !== currentPerson) return;
         const s = activeState();
         const a = getAnswersFor(currentPerson, s);
         a[q.id] = value;
@@ -402,17 +438,25 @@
     el.btnNext.title = nextDisabled && !selected ? "请先选择本题答案" : "";
     el.qIndexText.textContent = `${currentIndex + 1} / ${questions.length}`;
 
-    const s2 = loadState();
-    const submitEnabled = canSubmit(currentPerson, s2);
+    const s2 = activeState();
+    const total = questions.length;
+    const done = answerCount(currentPerson, s2);
+    const canSubmitNow = done >= total;
+    const isOwnTab = !remoteState || myRole === currentPerson;
+    const submitEnabled = isOwnTab && canSubmitNow;
     el.btnSubmit.disabled = !submitEnabled;
     el.btnSubmit.textContent = `提交 ${displayName(currentPerson, s2)} 的答案`;
 
     const submitted = isSubmitted(currentPerson, s2);
-    el.submitHint.textContent = submitted
-      ? "已提交。若你修改了答案，再次提交会覆盖之前的提交。"
-      : submitEnabled
-        ? "全部题已作答，可以提交。提交后仍可修改：重新提交会覆盖。"
-        : "请先把所有题都选完，本人才可以提交。";
+    if (remoteState && myRole !== currentPerson) {
+      el.submitHint.textContent = "当前为对方视角，请切换回自己的身份（A 或 B）后再提交。";
+    } else {
+      el.submitHint.textContent = submitted
+        ? "已提交。若你修改了答案，再次提交会覆盖之前的提交。"
+        : submitEnabled
+          ? "全部题已作答，可以提交。提交后仍可修改：重新提交会覆盖。"
+          : "请先把所有题都选完，本人才可以提交。";
+    }
   }
 
   function renderResults(state) {
@@ -655,10 +699,92 @@
     { emoji: "🐧", name: "企鹅", desc: "专一顾家，重视陪伴与共同目标。" },
   ];
 
+  /** 维度顺序，用于 tie-break 与次维度选择 */
+  const DIM_ORDER = ["signal", "boundary", "conflict", "money", "future", "intimacy", "life"];
+
+  /**
+   * 每个主维度对应若干动物（索引）；用「次维度」在顺序中的位置取模，选出其一。
+   * 逻辑：你的作答在哪个维度上最突出（主维度），再结合第二突出的维度（次维度）决定具体动物。
+   */
+  const PRIMARY_DIM_TO_ANIMALS = {
+    signal: [3, 7],       // 沟通信号 → 海豚 / 猫头鹰
+    boundary: [0, 5],     // 边界与自由 → 狐狸 / 狼
+    conflict: [4, 7],     // 冲突修复 → 鹿 / 猫头鹰
+    money: [8, 10],       // 金钱与风险 → 熊 / 象
+    future: [2, 11],      // 未来与承诺 → 鹰 / 企鹅
+    intimacy: [6, 9, 3],  // 亲密与表达 → 兔子 / 蝴蝶 / 海豚
+    life: [1, 8],         // 生活节奏 → 猫 / 熊
+  };
+
+  /** 根据作答计算各维度的「强度」：同一维度下每题选中的选项序号之和（选项越靠后数值越大） */
+  function computeDimensionScoresForAnimal(answers) {
+    const scores = {};
+    DIM_ORDER.forEach((d) => { scores[d] = 0; });
+    for (const q of questions) {
+      const dim = q.dim || "signal";
+      const optId = answers[q.id];
+      if (optId == null) continue;
+      const idx = q.options.findIndex((o) => o.id === optId);
+      if (idx >= 0) scores[dim] = (scores[dim] || 0) + idx;
+    }
+    return scores;
+  }
+
+  /** 按维度得分降序排列维度 id（得分相同按 DIM_ORDER 顺序） */
+  function getDominantDimensionIds(scores) {
+    return DIM_ORDER.slice().sort((a, b) => {
+      const sa = scores[a] ?? 0;
+      const sb = scores[b] ?? 0;
+      if (sb !== sa) return sb - sa;
+      return DIM_ORDER.indexOf(a) - DIM_ORDER.indexOf(b);
+    });
+  }
+
+  /**
+   * 由作答组合得到动物：先算各维度强度 → 主维度 + 次维度 → 查表得到唯一动物。
+   */
   function buildAnimalCard(answers) {
-    const seed = seedFromAnswers(answers);
-    const animal = ANIMALS[seed % ANIMALS.length];
+    const scores = computeDimensionScoresForAnimal(answers || {});
+    const [primary, secondary] = getDominantDimensionIds(scores);
+    const list = PRIMARY_DIM_TO_ANIMALS[primary];
+    if (!list || list.length === 0) {
+      const fallback = ANIMALS[0];
+      return { emoji: fallback.emoji, name: fallback.name, desc: fallback.desc };
+    }
+    const secondaryRank = DIM_ORDER.indexOf(secondary);
+    const idx = list[secondaryRank % list.length];
+    const animal = ANIMALS[idx];
     return { emoji: animal.emoji, name: animal.name, desc: animal.desc };
+  }
+
+  function renderAnimalModalList() {
+    if (!el.animalModalList) return;
+    el.animalModalList.innerHTML = ANIMALS.map(
+      (a) => `
+        <article class="animalModalCard">
+          <div class="animalModalCard__emoji" role="img" aria-label="${escapeHtml(a.name)}">${escapeHtml(a.emoji)}</div>
+          <div class="animalModalCard__text">
+            <div class="animalModalCard__name">${escapeHtml(a.name)}</div>
+            <div class="animalModalCard__desc">${escapeHtml(a.desc)}</div>
+          </div>
+        </article>
+      `,
+    ).join("");
+  }
+
+  function openAnimalModal() {
+    renderAnimalModalList();
+    if (el.animalModal) {
+      el.animalModal.classList.add("modal--open");
+      el.animalModal.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  function closeAnimalModal() {
+    if (el.animalModal) {
+      el.animalModal.classList.remove("modal--open");
+      el.animalModal.setAttribute("aria-hidden", "true");
+    }
   }
 
   function renderDimensionAnalysis(state) {
@@ -810,21 +936,6 @@
     return base[dimId] || fallback;
   }
 
-  function seedFromAnswers(answers) {
-    const keys = Object.keys(answers || {}).sort();
-    const joined = keys.map((k) => `${k}:${answers[k]}`).join("|");
-    return fnv1a(joined || "empty");
-  }
-
-  function fnv1a(str) {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < str.length; i++) {
-      h ^= str.charCodeAt(i);
-      h = Math.imul(h, 0x01000193);
-    }
-    return h >>> 0;
-  }
-
   function renderItem(question, a, b, ok, nameA, nameB) {
     const na = nameA || "A";
     const nb = nameB || "B";
@@ -905,7 +1016,11 @@
     setSubmitted(currentPerson, state, true);
     if (!remoteState) saveState(state);
     else {
-      maybeSyncPatch({ submitted: true });
+      const myAnswers = getAnswersFor(currentPerson, state) || {};
+      wsSend({
+        type: "update",
+        patch: { answers: { ...myAnswers }, submitted: true },
+      });
     }
     render();
 
@@ -953,6 +1068,16 @@
     });
   }
   if (el.btnJoinRoom) el.btnJoinRoom.addEventListener("click", connectAndJoin);
+
+  [el.btnViewAllAnimals, el.btnViewAllAnimalsFooter].forEach((btn) => {
+    if (btn) btn.addEventListener("click", openAnimalModal);
+  });
+  if (el.animalModalClose) el.animalModalClose.addEventListener("click", closeAnimalModal);
+  if (el.animalModalBackdrop) el.animalModalBackdrop.addEventListener("click", closeAnimalModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && el.animalModal?.classList.contains("modal--open")) closeAnimalModal();
+  });
+
   render();
 })();
 

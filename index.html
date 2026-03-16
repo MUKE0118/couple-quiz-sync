@@ -74,26 +74,26 @@
           </div>
           <div class="nicknameRow">
             <div class="field field--sm">
-              <label class="field__label" for="nicknameA">A 的昵称</label>
+              <label class="field__label" for="nicknameA">A 的昵称（可自定义）</label>
               <input id="nicknameA" class="input input--sm" type="text" placeholder="选填，如：小明" maxlength="20" />
             </div>
             <div class="field field--sm">
-              <label class="field__label" for="nicknameB">B 的昵称</label>
+              <label class="field__label" for="nicknameB">B 的昵称（可自定义）</label>
               <input id="nicknameB" class="input input--sm" type="text" placeholder="选填，如：小红" maxlength="20" />
             </div>
           </div>
 
           <div class="status">
             <div class="status__item">
-              <div id="statusLabelA" class="status__label">A 提交状态</div>
-              <div id="statusA" class="badge badge--muted">未提交</div>
+              <div id="statusLabelA" class="status__label">A 进度</div>
+              <div id="statusA" class="badge badge--muted">0/0 题 · 未提交</div>
             </div>
             <div class="status__item">
-              <div id="statusLabelB" class="status__label">B 提交状态</div>
-              <div id="statusB" class="badge badge--muted">未提交</div>
+              <div id="statusLabelB" class="status__label">B 进度</div>
+              <div id="statusB" class="badge badge--muted">0/0 题 · 未提交</div>
             </div>
             <div class="status__item status__item--grow">
-              <div class="status__label">进度</div>
+              <div class="status__label">当前作答人进度</div>
               <div class="progress">
                 <div class="progress__bar">
                   <div id="progressFill" class="progress__fill" style="width: 0%"></div>
@@ -178,7 +178,7 @@
                     <div id="charHostB" class="animalCard__body" aria-label="B 的动物人格"></div>
                   </article>
                 </div>
-                <p class="animalSection__note">本地生成，不上传。</p>
+                <p class="animalSection__note">本地生成，不上传。 <button id="btnViewAllAnimals" class="btn btn--link" type="button">查看所有动物性格</button></p>
               </div>
             </div>
 
@@ -197,8 +197,20 @@
       </main>
 
       <footer class="footer">
-        <div class="footer__text">答案存于本机。联机需填同步地址与房间码。</div>
+        <div class="footer__text">答案存于本机。联机需填同步地址与房间码。 <button id="btnViewAllAnimalsFooter" class="btn btn--link" type="button">查看所有动物性格</button></div>
       </footer>
+
+      <div id="animalModal" class="modal" aria-hidden="true">
+        <div id="animalModalBackdrop" class="modal__backdrop"></div>
+        <div class="modal__panel">
+          <div class="modal__head">
+            <h3 class="modal__title">所有动物性格</h3>
+            <button id="animalModalClose" class="modal__close" type="button" aria-label="关闭">关闭</button>
+          </div>
+          <p class="modal__note">你的动物人格由作答的「维度强度」决定：先看你在哪个维度最突出（主维度），再结合第二突出的维度（次维度）查表得出唯一动物。</p>
+          <div id="animalModalList" class="animalModalList"></div>
+        </div>
+      </div>
     </div>
 
     <script src="./questions.js"></script>
