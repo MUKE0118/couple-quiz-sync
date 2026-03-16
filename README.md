@@ -47,11 +47,25 @@
 
 ## 异地同步（房间码 + 在线同步）
 
-### 1) 部署同步服务端（Node）
+### 1) 一键部署同步服务端（Render，最简单）
 
-`server/` 是 WebSocket 服务端。你可以把它部署到任意支持 Node 的平台（Render/Fly/Railway 等）。
+我已经给仓库加好了 Render 的一键部署配置（`render.yaml`）。
 
-本地先跑起来测试：
+按下面做（不需要懂代码）：
+
+1. 打开这个按钮（会跳到 Render）：`https://render.com/deploy?repo=https://github.com/MUKE0118/couple-quiz-sync`
+2. 用 GitHub 登录 Render（第一次会让你点授权）
+3. 点击 Deploy，等待部署完成
+4. 部署完成后，Render 会给你一个地址，长这样：`https://xxxx.onrender.com`
+
+然后网页里填（非常关键）：
+
+- **同步服务地址**：把 Render 的 `https://xxxx.onrender.com` 改成 **`wss://xxxx.onrender.com`**
+- **房间码**：随便生成一个（两个人一样就行）
+
+### 2) 本地先跑起来测试（可选）
+
+`server/` 是 WebSocket 服务端。你也可以先在自己电脑跑通：
 
 ```bash
 cd server
@@ -64,11 +78,7 @@ npm start
 - 同步服务地址：`ws://127.0.0.1:8787`
 - 房间码：随便生成一个
 
-### 2) 线上使用
-
-你把 `server/` 部署成功后，会得到一个地址：
-- 如果平台给你 `https://xxx`，网页里可以填 `wss://xxx`
-- 或直接填平台提供的 `wss://xxx`
+### 3) 线上使用（异地联机）
 
 两个人打开同一个网页，填同一个同步地址 + 同一个房间码，就会实时同步作答与提交。
 

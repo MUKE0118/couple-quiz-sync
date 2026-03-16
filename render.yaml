@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: couple-quiz-sync-server
+    runtime: node
+    rootDir: server
+    plan: free
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: CORS_ORIGIN
+        value: "*"
+
