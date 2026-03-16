@@ -118,7 +118,14 @@
   }
 
   function activeState() {
-    return remoteState || loadState();
+    const s = remoteState || loadState();
+    if (!s) return s;
+    if (remoteState && (myRole === "a" || myRole === "b")) {
+      const local = loadState();
+      const mine = myRole === "a" ? "a" : "b";
+      s[mine] = { ...(local[mine] || {}), ...(s[mine] || {}) };
+    }
+    return s;
   }
 
   function setConnBadge(ok, text) {
@@ -436,8 +443,8 @@
         }
         const a = getAnswersFor(currentPerson, s);
         a[q.id] = value;
-        if (!remoteState) saveState(s);
-        else if (myRole === currentPerson) {
+        saveState(s);
+        if (remoteState && myRole === currentPerson) {
           maybeSyncPatch({ answers: { [q.id]: value } });
         }
         render();
@@ -1021,13 +1028,16 @@
 
   el.btnSubmit.addEventListener("click", () => {
     const state = activeState();
-    if (!canSubmit(currentPerson, state)) {
-      alert("请先把所有题都选完，再提交。");
+    if (!state) return;
+    const total = questions.length;
+    const done = answerCount(currentPerson, state);
+    if (done < total) {
+      alert("请先把所有题都选完，再提交。（当前已答 " + done + "/" + total + " 题）");
       return;
     }
     setSubmitted(currentPerson, state, true);
-    if (!remoteState) saveState(state);
-    else {
+    saveState(state);
+    if (remoteState && (myRole === "a" || myRole === "b")) {
       const myAnswers = getAnswersFor(currentPerson, state) || {};
       wsSend({
         type: "update",
