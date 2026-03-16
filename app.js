@@ -323,8 +323,8 @@
     const aOk = Boolean(state.submittedA);
     const bOk = Boolean(state.submittedB);
 
-    el.statusA.textContent = aOk ? "已提交" : "未提交";
-    el.statusB.textContent = bOk ? "已提交" : "未提交";
+    el.statusA.textContent = aOk ? "[x] 已提交" : "[ ] 未提交";
+    el.statusB.textContent = bOk ? "[x] 已提交" : "[ ] 未提交";
     el.statusA.className = `badge ${aOk ? "badge--ok" : "badge--muted"}`;
     el.statusB.className = `badge ${bOk ? "badge--ok" : "badge--muted"}`;
   }
