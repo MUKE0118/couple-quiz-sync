@@ -313,6 +313,53 @@ body {
   line-height: 1.4;
 }
 
+/* 报表预览：高级简约 */
+.reportPreview {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: var(--fill);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--separator);
+}
+.reportPreview.card--hidden {
+  display: none;
+}
+.reportPreview__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+}
+.reportPreview__inner {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--separator);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+.reportPreview__img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+.reportPreview__actions {
+  display: flex;
+  justify-content: center;
+}
+.reportPreview__actions .btn {
+  min-width: 140px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Result hero */
 .result__hero {
   display: flex;

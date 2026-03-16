@@ -37,7 +37,11 @@
     charHostA: qs("#charHostA"),
     charHostB: qs("#charHostB"),
     btnShareImage: qs("#btnShareImage"),
+    reportPreviewWrap: qs("#reportPreviewWrap"),
+    reportPreviewImg: qs("#reportPreviewImg"),
+    btnDownloadReport: qs("#btnDownloadReport"),
   };
+  let currentReportUrl = null;
 
   const questions = Array.isArray(window.QUESTIONS) ? window.QUESTIONS : [];
   const dimensions = Array.isArray(window.DIMENSIONS) ? window.DIMENSIONS : [];
@@ -378,7 +382,9 @@
     });
 
     el.btnPrev.disabled = currentIndex === 0;
-    el.btnNext.disabled = currentIndex === questions.length - 1;
+    const nextDisabled = currentIndex === questions.length - 1 || !selected;
+    el.btnNext.disabled = nextDisabled;
+    el.btnNext.title = nextDisabled && !selected ? "请先选择本题答案" : "";
     el.qIndexText.textContent = `${currentIndex + 1} / ${questions.length}`;
 
     const s2 = loadState();
@@ -425,29 +431,41 @@
       el.btnShareImage.onclick = async () => {
         const blob = await drawReportImage(state);
         if (!blob) return;
-        const url = URL.createObjectURL(blob);
+        if (currentReportUrl) URL.revokeObjectURL(currentReportUrl);
+        currentReportUrl = URL.createObjectURL(blob);
+        const filename = `情侣契合度报告-${matches.length}-${total}.png`;
+        if (el.reportPreviewImg) {
+          el.reportPreviewImg.src = currentReportUrl;
+          el.reportPreviewImg.style.display = "block";
+        }
+        if (el.reportPreviewWrap) el.reportPreviewWrap.classList.remove("card--hidden");
+        if (el.btnDownloadReport) {
+          el.btnDownloadReport.href = currentReportUrl;
+          el.btnDownloadReport.download = filename;
+          el.btnDownloadReport.style.display = "inline-flex";
+        }
         const a = document.createElement("a");
-        a.href = url;
-        a.download = `情侣契合度报告-${matches.length}-${total}.png`;
+        a.href = currentReportUrl;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 500);
       };
     }
   }
 
   function drawReportImage(state) {
-    const { matches, diffs } = computeMatches(state);
+    const { matches } = computeMatches(state);
     const total = questions.length;
     const rate = total === 0 ? 0 : Math.round((matches.length / total) * 100);
     const stats = computeDimensionStats(state);
     const animalA = buildAnimalCard(state.a || {});
     const animalB = buildAnimalCard(state.b || {});
 
-    const W = 600;
-    const H = 960;
+    const W = 560;
+    const H = 920;
     const scale = 2;
+    const pad = 44;
     const canvas = document.createElement("canvas");
     canvas.width = W * scale;
     canvas.height = H * scale;
@@ -455,101 +473,100 @@
     if (!ctx) return null;
     ctx.scale(scale, scale);
 
-    const bg = "#f5f5f7";
+    const bg = "#fafafa";
     const cardBg = "#ffffff";
     const text = "#1d1d1f";
     const textSec = "#6e6e73";
     const textTri = "#86868b";
-    const border = "rgba(0,0,0,0.08)";
+    const line = "rgba(0,0,0,0.06)";
     const font = "PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif";
 
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
     ctx.fillStyle = cardBg;
-    roundRect(ctx, 24, 24, W - 48, H - 48, 20);
+    roundRect(ctx, 32, 32, W - 64, H - 64, 24);
     ctx.fill();
-    ctx.strokeStyle = border;
+    ctx.strokeStyle = line;
     ctx.lineWidth = 1;
     ctx.stroke();
 
     let y = 72;
-    ctx.fillStyle = text;
-    ctx.font = `600 26px ${font}`;
-    ctx.fillText("情侣契合度测试", 48, y);
-    y += 36;
     ctx.fillStyle = textTri;
-    ctx.font = `400 13px ${font}`;
-    ctx.fillText("契合度报告", 48, y);
-    y += 48;
+    ctx.font = `400 12px ${font}`;
+    ctx.fillText("契合度报告", pad, y);
+    y += 28;
+    ctx.fillStyle = text;
+    ctx.font = `600 24px ${font}`;
+    ctx.fillText("情侣契合度测试", pad, y);
+    y += 52;
 
     ctx.fillStyle = text;
-    ctx.font = `600 56px ${font}`;
+    ctx.font = `600 48px ${font}`;
     const rateStr = rate + "%";
     const rateW = ctx.measureText(rateStr).width;
     ctx.fillText(rateStr, (W - rateW) / 2, y);
-    y += 52;
+    y += 44;
     ctx.fillStyle = textSec;
-    ctx.font = `400 15px ${font}`;
-    ctx.fillText(`一致 ${matches.length} / ${total} 题`, 48, y);
-    y += 40;
+    ctx.font = `400 14px ${font}`;
+    ctx.fillText(`一致 ${matches.length} / ${total} 题`, (W - ctx.measureText(`一致 ${matches.length} / ${total} 题`).width) / 2, y);
+    y += 48;
 
-    ctx.strokeStyle = border;
+    ctx.strokeStyle = line;
     ctx.beginPath();
-    ctx.moveTo(48, y);
-    ctx.lineTo(W - 48, y);
+    ctx.moveTo(pad, y);
+    ctx.lineTo(W - pad, y);
     ctx.stroke();
-    y += 32;
+    y += 36;
 
     ctx.fillStyle = textTri;
-    ctx.font = `600 11px ${font}`;
-    ctx.fillText("维度", 48, y);
-    y += 28;
-    const barH = 20;
-    const barW = W - 48 - 48 - 80;
+    ctx.font = `500 11px ${font}`;
+    ctx.fillText("维度", pad, y);
+    y += 24;
     for (let i = 0; i < Math.min(stats.length, 6); i++) {
       const d = stats[i];
       const pct = Math.max(0, Math.min(100, d.rate));
       ctx.fillStyle = text;
-      ctx.font = `500 13px ${font}`;
-      ctx.fillText(d.name, 48, y + 14);
+      ctx.font = `400 13px ${font}`;
+      ctx.fillText(d.name, pad, y + 12);
       ctx.fillStyle = textSec;
       ctx.font = `400 12px ${font}`;
-      ctx.fillText(pct + "%", W - 48 - 36, y + 14);
-      ctx.fillStyle = border;
-      ctx.fillRect(48, y + 18, barW, 6);
+      ctx.fillText(pct + "%", W - pad - 32, y + 12);
+      const barW = W - pad * 2 - 44;
+      ctx.fillStyle = line;
+      ctx.fillRect(pad, y + 18, barW, 4);
       ctx.fillStyle = text;
-      ctx.fillRect(48, y + 18, (barW * pct) / 100, 6);
-      y += barH + 14;
+      ctx.fillRect(pad, y + 18, (barW * pct) / 100, 4);
+      y += 36;
     }
-    y += 24;
+    y += 28;
 
     ctx.fillStyle = textTri;
-    ctx.font = `600 11px ${font}`;
-    ctx.fillText("动物人格", 48, y);
-    y += 32;
-    ctx.font = `400 36px ${font}`;
-    ctx.fillText(animalA.emoji, 48, y + 28);
+    ctx.font = `500 11px ${font}`;
+    ctx.fillText("动物人格", pad, y);
+    y += 28;
+    ctx.font = `400 40px ${font}`;
+    ctx.fillText(animalA.emoji, pad, y + 32);
     ctx.fillStyle = text;
-    ctx.font = `600 16px ${font}`;
-    ctx.fillText("A · " + animalA.name, 100, y + 22);
+    ctx.font = `600 15px ${font}`;
+    ctx.fillText("A · " + animalA.name, pad + 52, y + 20);
     ctx.fillStyle = textSec;
     ctx.font = `400 12px ${font}`;
-    ctx.fillText(animalA.desc, 100, y + 42);
-    y += 72;
-    ctx.font = `400 36px ${font}`;
-    ctx.fillText(animalB.emoji, 48, y + 28);
+    ctx.fillText(animalA.desc, pad + 52, y + 40);
+    y += 80;
+    ctx.font = `400 40px ${font}`;
+    ctx.fillText(animalB.emoji, pad, y + 32);
     ctx.fillStyle = text;
-    ctx.font = `600 16px ${font}`;
-    ctx.fillText("B · " + animalB.name, 100, y + 22);
+    ctx.font = `600 15px ${font}`;
+    ctx.fillText("B · " + animalB.name, pad + 52, y + 20);
     ctx.fillStyle = textSec;
     ctx.font = `400 12px ${font}`;
-    ctx.fillText(animalB.desc, 100, y + 42);
-    y += 72;
+    ctx.fillText(animalB.desc, pad + 52, y + 40);
+    y += 56;
 
     ctx.fillStyle = textTri;
-    ctx.font = `400 11px ${font}`;
-    ctx.fillText("情侣契合度测试 · 本地生成", 48, H - 40);
+    ctx.font = `400 10px ${font}`;
+    ctx.fillText("情侣契合度测试 · 本地生成", pad, H - 48);
 
     function roundRect(ctx, x, y, w, h, r) {
       ctx.beginPath();

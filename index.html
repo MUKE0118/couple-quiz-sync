@@ -116,8 +116,17 @@
           <div class="card__title">结果</div>
           <div class="result">
             <div class="result__shareRow">
-              <button id="btnShareImage" class="btn btn--primary" type="button">生成分享图</button>
-              <span class="result__shareHint">生成一张包含契合度、维度与动物人格的报表图，可保存后分享。</span>
+              <button id="btnShareImage" class="btn btn--primary" type="button">生成报表图</button>
+              <span class="result__shareHint">生成一张可下载的报表图，含契合度、维度与动物人格，便于分享。</span>
+            </div>
+            <div id="reportPreviewWrap" class="reportPreview card--hidden">
+              <div class="reportPreview__title">报表预览</div>
+              <div class="reportPreview__inner">
+                <img id="reportPreviewImg" class="reportPreview__img" alt="契合度报表" />
+              </div>
+              <div class="reportPreview__actions">
+                <a id="btnDownloadReport" class="btn btn--primary" href="#" download="">下载图片</a>
+              </div>
             </div>
             <div class="result__hero">
               <div class="result__score">
