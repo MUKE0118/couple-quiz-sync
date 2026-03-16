@@ -453,48 +453,122 @@ body {
 .adviceItem__title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .adviceItem__body { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
 
-/* Animal cards */
-.result__characters { margin-bottom: 24px; }
-.charGrid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-@media (min-width: 600px) { .charGrid { grid-template-columns: 1fr 1fr; } }
-.animalCard {
-  background: var(--surface);
+/* 动物人格：高级卡片，适配整体风格 */
+.result__characters { margin-bottom: 28px; }
+.animalSection {
+  background: var(--fill);
   border-radius: var(--radius-lg);
-  padding: 28px;
-  text-align: center;
+  padding: 28px 24px;
   border: 1px solid var(--separator);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
-.animalCard__label {
+.animalSection__head {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--separator);
+}
+.animalSection__title {
+  margin: 0 0 6px 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.animalSection__sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.animalSection__note {
+  margin: 16px 0 0 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.charGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 600px) {
+  .charGrid { grid-template-columns: 1fr 1fr; }
+}
+
+.animalCard {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  border: 1px solid var(--separator);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-height: 160px;
+}
+.animalCard__tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--fill);
   font-size: 12px;
   font-weight: 600;
   color: var(--text-tertiary);
-  letter-spacing: 0.04em;
-  margin-bottom: 16px;
+  letter-spacing: 0.02em;
 }
 .animalCard__body {
-  min-height: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  min-height: 120px;
+  text-align: center;
+}
+@media (min-width: 500px) {
+  .animalCard__body {
+    flex-direction: row;
+    text-align: left;
+    justify-content: flex-start;
+    gap: 20px;
+  }
 }
 .animalCard__emoji {
-  font-size: 72px;
+  font-size: 64px;
   line-height: 1;
-  display: block;
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fill);
+  border-radius: 50%;
+}
+.animalCard__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 .animalCard__name {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 .animalCard__desc {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.45;
-  max-width: 220px;
+  line-height: 1.5;
+}
+@media (min-width: 500px) {
+  .animalCard__name { font-size: 17px; }
+  .animalCard__desc { max-width: 200px; }
 }
 
 /* Lists */

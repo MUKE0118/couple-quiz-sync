@@ -597,13 +597,17 @@
 
     el.charHostA.innerHTML = `
       <div class="animalCard__emoji" role="img" aria-label="${escapeHtml(animalA.name)}">${escapeHtml(animalA.emoji)}</div>
-      <div class="animalCard__name">${escapeHtml(animalA.name)}</div>
-      <div class="animalCard__desc">${escapeHtml(animalA.desc)}</div>
+      <div class="animalCard__text">
+        <div class="animalCard__name">${escapeHtml(animalA.name)}</div>
+        <div class="animalCard__desc">${escapeHtml(animalA.desc)}</div>
+      </div>
     `;
     el.charHostB.innerHTML = `
       <div class="animalCard__emoji" role="img" aria-label="${escapeHtml(animalB.name)}">${escapeHtml(animalB.emoji)}</div>
-      <div class="animalCard__name">${escapeHtml(animalB.name)}</div>
-      <div class="animalCard__desc">${escapeHtml(animalB.desc)}</div>
+      <div class="animalCard__text">
+        <div class="animalCard__name">${escapeHtml(animalB.name)}</div>
+        <div class="animalCard__desc">${escapeHtml(animalB.desc)}</div>
+      </div>
     `;
   }
 

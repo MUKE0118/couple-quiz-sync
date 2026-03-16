@@ -153,20 +153,22 @@
             </div>
 
             <div class="result__characters">
-              <div class="panel">
-                <div class="panel__title">动物人格</div>
-                <p class="panel__sub">根据两人作答生成的动物形象，代表你们的相处风格。</p>
-                <div class="charGrid">
-                  <div class="animalCard">
-                    <div class="animalCard__label">A 的动物</div>
-                    <div id="charHostA" class="animalCard__body" aria-label="A 的动物人格"></div>
-                  </div>
-                  <div class="animalCard">
-                    <div class="animalCard__label">B 的动物</div>
-                    <div id="charHostB" class="animalCard__body" aria-label="B 的动物人格"></div>
-                  </div>
+              <div class="animalSection">
+                <div class="animalSection__head">
+                  <h3 class="animalSection__title">动物人格</h3>
+                  <p class="animalSection__sub">根据作答生成的动物形象，代表相处风格。</p>
                 </div>
-                <div class="panel__hint">本地生成，不上传。</div>
+                <div class="charGrid">
+                  <article class="animalCard">
+                    <span class="animalCard__tag">A</span>
+                    <div id="charHostA" class="animalCard__body" aria-label="A 的动物人格"></div>
+                  </article>
+                  <article class="animalCard">
+                    <span class="animalCard__tag">B</span>
+                    <div id="charHostB" class="animalCard__body" aria-label="B 的动物人格"></div>
+                  </article>
+                </div>
+                <p class="animalSection__note">本地生成，不上传。</p>
               </div>
             </div>
 
