@@ -1092,14 +1092,28 @@
   }
   if (el.btnJoinRoom) el.btnJoinRoom.addEventListener("click", connectAndJoin);
 
+  function handleOpenAllAnimals(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    openAnimalModal();
+  }
   document.body.addEventListener("click", (e) => {
-    if (e.target.closest("#btnViewAllAnimals")) {
-      e.preventDefault();
-      openAnimalModal();
-    }
+    if (e.target.closest("#btnViewAllAnimals")) handleOpenAllAnimals(e);
   });
-  if (el.animalModalClose) el.animalModalClose.addEventListener("click", closeAnimalModal);
-  if (el.animalModalBackdrop) el.animalModalBackdrop.addEventListener("click", closeAnimalModal);
+  document.body.addEventListener("touchend", (e) => {
+    if (e.target.closest("#btnViewAllAnimals")) {
+      handleOpenAllAnimals(e);
+      if (e.cancelable) e.preventDefault();
+    }
+  }, { passive: false });
+  if (el.animalModalClose) {
+    el.animalModalClose.addEventListener("click", closeAnimalModal);
+    el.animalModalClose.addEventListener("touchend", (e) => { e.preventDefault(); closeAnimalModal(); }, { passive: false });
+  }
+  if (el.animalModalBackdrop) {
+    el.animalModalBackdrop.addEventListener("click", closeAnimalModal);
+    el.animalModalBackdrop.addEventListener("touchend", (e) => { if (e.cancelable) e.preventDefault(); closeAnimalModal(); }, { passive: false });
+  }
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && el.animalModal?.classList.contains("modal--open")) closeAnimalModal();
   });

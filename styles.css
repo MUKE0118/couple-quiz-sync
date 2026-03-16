@@ -16,6 +16,10 @@
 }
 
 * { box-sizing: border-box; }
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
 html, body { height: 100%; }
 
 body {
@@ -26,6 +30,7 @@ body {
   font-size: 15px;
   line-height: 1.47;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 .app {
@@ -620,7 +625,7 @@ body {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -629,6 +634,7 @@ body {
   visibility: hidden;
   opacity: 0;
   transition: visibility 0.2s, opacity 0.2s;
+  -webkit-overflow-scrolling: touch;
 }
 .modal.modal--open {
   pointer-events: auto;
@@ -638,8 +644,10 @@ body {
 .modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  min-height: 100%;
+  min-width: 100%;
 }
 .modal__panel {
   position: relative;
@@ -653,6 +661,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 .modal__head {
   display: flex;
@@ -770,3 +779,183 @@ body {
   color: var(--text-tertiary);
 }
 .footer .btn--link { margin-left: 6px; }
+
+/* ========== 手机端适配 ========== */
+@media (max-width: 600px) {
+  .app {
+    padding: 16px 12px 32px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+  }
+  .header {
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+  .brand__title {
+    font-size: 22px;
+  }
+  .brand__subtitle {
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .card {
+    padding: 18px 16px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+  }
+  .card__title {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .pill {
+    padding: 14px 18px;
+    min-height: 48px;
+    flex: 1;
+    justify-content: center;
+  }
+  .switcher { gap: 10px; }
+  .nicknameRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .status {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .status__item {
+    min-width: 0;
+  }
+  .status__item--grow { flex: none; }
+  .progress__text { font-size: 14px; }
+  .question__title { font-size: 17px; }
+  .option {
+    padding: 16px;
+    min-height: 48px;
+  }
+  .option__label { font-size: 16px; }
+  .nav {
+    margin-top: 16px;
+    gap: 10px;
+  }
+  .nav .btn { min-height: 48px; padding: 14px 18px; }
+  .submitRow {
+    margin-top: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .submitRow .btn {
+    width: 100%;
+    min-height: 52px;
+    font-size: 16px;
+  }
+  .hint { font-size: 14px; }
+  .roomRow { gap: 12px; }
+  .roomJoin {
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+  }
+  .howToSync {
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .howToSync__steps { font-size: 14px; padding-left: 20px; }
+  .result__hero { padding: 20px 0; }
+  .result__scoreValue { font-size: 42px; }
+  .result__analysis .panel { padding: 16px; }
+  .dimensionGrid { gap: 12px; }
+  .animalSection {
+    padding: 18px 16px;
+  }
+  .animalSection__head { margin-bottom: 16px; padding-bottom: 14px; }
+  .charGrid { gap: 16px; }
+  .animalCard {
+    padding: 18px 16px;
+    min-height: 140px;
+  }
+  .animalCard__emoji {
+    font-size: 52px;
+    width: 64px;
+    height: 64px;
+  }
+  .animalCard__name { font-size: 16px; }
+  .animalCard__desc { font-size: 14px; }
+  .list { padding: 16px; }
+  .item__q { font-size: 15px; }
+  .reportPreview__inner { padding: 12px; }
+  .reportPreview__img { max-height: 70vh; }
+}
+
+/* 查看所有动物性格：手机可点 + 弹窗全屏 */
+.btn--viewAnimals {
+  min-height: 44px;
+  padding: 10px 0;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 600px) {
+  .modal {
+    padding: 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    align-items: flex-start;
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  .modal__panel {
+    max-width: none;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .modal__head {
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+  .modal__title { font-size: 17px; }
+  .modal__close {
+    min-height: 44px;
+    min-width: 60px;
+    padding: 10px 16px;
+    font-size: 16px;
+    touch-action: manipulation;
+  }
+  .modal__note {
+    margin: 0 20px 12px;
+    font-size: 14px;
+  }
+  .animalModalList {
+    padding: 16px 20px 24px;
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
+    max-height: 60vh;
+  }
+  .animalModalCard {
+    padding: 14px;
+    min-height: 44px;
+  }
+  .animalModalCard__emoji {
+    width: 48px;
+    height: 48px;
+    font-size: 32px;
+  }
+  .animalModalCard__name { font-size: 16px; }
+  .animalModalCard__desc { font-size: 14px; }
+}
+
+/* 输入框 16px 避免 iOS 自动缩放 */
+@media (max-width: 600px) {
+  .input {
+    font-size: 16px;
+    padding: 14px 16px;
+    min-height: 48px;
+  }
+  .input--sm { font-size: 16px; min-height: 44px; }
+  .input--mono { font-size: 16px; }
+}
